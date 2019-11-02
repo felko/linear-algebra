@@ -200,3 +200,9 @@ open import Algebra.Linear.Structures.VectorSpace  {a ⊔ k} {k} {ℓ ⊔ ℓᵏ
   ; •-identity       = •-identity
   ; •-absorb         = •-absorb
   }
+
++-•-isFiniteDimensional : ∀ {n} -> IsFiniteDimensional (≈-isEquiv {n}) _+_ _•_ -_ 0#
++-•-isFiniteDimensional {n} = record
+  { isVectorSpace = +-•-isVectorSpace
+  ; dim           = n
+  }

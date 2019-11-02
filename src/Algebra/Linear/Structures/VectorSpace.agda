@@ -15,6 +15,7 @@ module Algebra.Linear.Structures.VectorSpace
 
 open import Algebra.Structures _≈_
 open import Level using (_⊔_)
+open import Data.Nat using (ℕ)
 
 record IsVectorSpace (_+_ : Op₂ V) (_•_ : K → V → V) (-_ : Op₁ V) (0# : V) : Set (v ⊔ k ⊔ ℓ) where
   field
@@ -32,3 +33,10 @@ record IsVectorSpace (_+_ : Op₂ V) (_•_ : K → V → V) (-_ : Op₁ V) (0# 
     ; inverse to -‿inverse
     ; ⁻¹-cong  to -‿cong
     )
+
+record IsFiniteDimensional (+ : Op₂ V) (• : K → V → V) (-_ : Op₁ V) (0# : V) : Set (v ⊔ k ⊔ ℓ) where
+  field
+    isVectorSpace : IsVectorSpace + • -_ 0#
+    dim           : ℕ
+
+  open IsVectorSpace isVectorSpace public
