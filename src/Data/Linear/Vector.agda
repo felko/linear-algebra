@@ -96,9 +96,9 @@ _+_ : ∀ {n} → Op₂ (Vector n)
 [] + [] = []
 (x ∷ xs) + (y ∷ ys) = (x +ᵏ y) ∷ (xs + ys)
 
-_•_ : ∀ {n} → K → Vector n → Vector n
-k • [] = []
-k • (x ∷ xs) = (k *ᵏ x) ∷ (k • xs)
+_∙_ : ∀ {n} → K → Vector n → Vector n
+k ∙ [] = []
+k ∙ (x ∷ xs) = (k *ᵏ x) ∷ (k ∙ xs)
 
 +-cong : ∀ {n} → Congruent₂ (_≈_ {n}) _+_
 +-cong ≈-null ≈-null = ≈-null
@@ -123,25 +123,25 @@ k • (x ∷ xs) = (k *ᵏ x) ∷ (k • xs)
 +-comm [] [] = ≈-null
 +-comm (x ∷ xs) (y ∷ ys) = ≈-cons (+ᵏ-comm x y) (+-comm xs ys)
 
-*ᵏ-•-compat : ∀ {n} (a b : K) (u : Vector n) -> ((a *ᵏ b) • u) ≈ (a • (b • u))
-*ᵏ-•-compat a b [] = ≈-null
-*ᵏ-•-compat a b (x ∷ xs) = ≈-cons (*ᵏ-assoc a b x) (*ᵏ-•-compat a b xs)
+*ᵏ-∙-compat : ∀ {n} (a b : K) (u : Vector n) -> ((a *ᵏ b) ∙ u) ≈ (a ∙ (b ∙ u))
+*ᵏ-∙-compat a b [] = ≈-null
+*ᵏ-∙-compat a b (x ∷ xs) = ≈-cons (*ᵏ-assoc a b x) (*ᵏ-∙-compat a b xs)
 
-•-+-distrib : ∀ {n} (a : K) (u v : Vector n) -> (a • (u + v)) ≈ ((a • u) + (a • v))
-•-+-distrib a [] [] = ≈-null
-•-+-distrib a (x ∷ xs) (y ∷ ys) = ≈-cons (*ᵏ-+ᵏ-distribˡ a x y) (•-+-distrib a xs ys)
+∙-+-distrib : ∀ {n} (a : K) (u v : Vector n) -> (a ∙ (u + v)) ≈ ((a ∙ u) + (a ∙ v))
+∙-+-distrib a [] [] = ≈-null
+∙-+-distrib a (x ∷ xs) (y ∷ ys) = ≈-cons (*ᵏ-+ᵏ-distribˡ a x y) (∙-+-distrib a xs ys)
 
-•-+ᵏ-distrib : ∀ {n} (a b : K) (u : Vector n) -> ((a +ᵏ b) • u) ≈ ((a • u) + (b • u))
-•-+ᵏ-distrib a b [] = ≈-null
-•-+ᵏ-distrib a b (x ∷ u) = ≈-cons (*ᵏ-+ᵏ-distribʳ x a b) (•-+ᵏ-distrib a b u)
+∙-+ᵏ-distrib : ∀ {n} (a b : K) (u : Vector n) -> ((a +ᵏ b) ∙ u) ≈ ((a ∙ u) + (b ∙ u))
+∙-+ᵏ-distrib a b [] = ≈-null
+∙-+ᵏ-distrib a b (x ∷ u) = ≈-cons (*ᵏ-+ᵏ-distribʳ x a b) (∙-+ᵏ-distrib a b u)
 
-•-identity : ∀ {n} (x : Vector n) → (1ᵏ • x) ≈ x
-•-identity [] = ≈-null
-•-identity (x ∷ xs) = ≈-cons (*ᵏ-identityˡ x) (•-identity xs)
+∙-identity : ∀ {n} (x : Vector n) → (1ᵏ ∙ x) ≈ x
+∙-identity [] = ≈-null
+∙-identity (x ∷ xs) = ≈-cons (*ᵏ-identityˡ x) (∙-identity xs)
 
-•-absorb : ∀ {n} (x : Vector n) → (0ᵏ • x) ≈ 0#
-•-absorb [] = ≈-null
-•-absorb (x ∷ xs) = ≈-cons (*ᵏ-zeroˡ x) (•-absorb xs)
+∙-absorb : ∀ {n} (x : Vector n) → (0ᵏ ∙ x) ≈ 0#
+∙-absorb [] = ≈-null
+∙-absorb (x ∷ xs) = ≈-cons (*ᵏ-zeroˡ x) (∙-absorb xs)
 
 -‿inverseˡ : ∀ {n} → LeftInverse  (_≈_ {n}) 0# -_ _+_
 -‿inverseˡ [] = ≈-null
@@ -191,18 +191,17 @@ k • (x ∷ xs) = (k *ᵏ x) ∷ (k • xs)
 
 open import Algebra.Linear.Structures.VectorSpace  {a ⊔ k} {k} {ℓ ⊔ ℓᵏ} {ℓᵏ} {K = K} isField
 
-+-•-isVectorSpace : ∀ {n} -> IsVectorSpace (≈-isEquiv {n}) _+_ _•_ -_ 0#
-+-•-isVectorSpace = record
++-∙-isVectorSpace : ∀ {n} -> IsVectorSpace (≈-isEquiv {n}) _+_ _∙_ -_ 0#
++-∙-isVectorSpace = record
   { +-isAbelianGroup = +-isAbelianGroup
-  ; *ᵏ-•-compat      = *ᵏ-•-compat
-  ; •-+-distrib      = •-+-distrib
-  ; •-+ᵏ-distrib     = •-+ᵏ-distrib
-  ; •-identity       = •-identity
-  ; •-absorb         = •-absorb
+  ; *ᵏ-∙-compat      = *ᵏ-∙-compat
+  ; ∙-+-distrib      = ∙-+-distrib
+  ; ∙-+ᵏ-distrib     = ∙-+ᵏ-distrib
+  ; ∙-identity       = ∙-identity
+  ; ∙-absorb         = ∙-absorb
   }
 
-+-•-isFiniteDimensional : ∀ {n} -> IsFiniteDimensional (≈-isEquiv {n}) _+_ _•_ -_ 0#
-+-•-isFiniteDimensional {n} = record
-  { isVectorSpace = +-•-isVectorSpace
-  ; dim           = n
++-∙-isFiniteDimensional : ∀ {n} -> IsFiniteDimensional (≈-isEquiv {n}) _+_ _∙_ -_ 0# n
++-∙-isFiniteDimensional {n} = record
+  { isVectorSpace = +-∙-isVectorSpace
   }
