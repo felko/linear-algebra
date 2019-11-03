@@ -6,15 +6,15 @@ open import Algebra.FunctionProperties
 open import Data.Product
 open import Data.Nat using (ℕ; zero; suc)
 
-module Data.Linear.Vector
-  {a k ℓ ℓᵏ} {K : Set k}
-  {_≈ᵏ_ : Rel K ℓᵏ}
-  (isEquivᵏ : IsEquivalence _≈ᵏ_)
-  {_+ᵏ_ _*ᵏ_ : Op₂ K} {0ᵏ 1ᵏ : K} { -ᵏ_ : Op₁ K } {_⁻¹ᵏ : MultiplicativeInverse isEquivᵏ 0ᵏ}
-  (isField : IsField isEquivᵏ _+ᵏ_ _*ᵏ_ 0ᵏ 1ᵏ -ᵏ_ _⁻¹ᵏ)
+module Algebra.Linear.Construct.Vector
+  {k ℓ} {K : Set k}
+  {_≈ᵏ_ : Rel K ℓ}
+  (≈ᵏ-isEquiv : IsEquivalence _≈ᵏ_)
+  {_+ᵏ_ _*ᵏ_ : Op₂ K} {0ᵏ 1ᵏ : K} { -ᵏ_ : Op₁ K } {_⁻¹ᵏ : MultiplicativeInverse ≈ᵏ-isEquiv 0ᵏ}
+  (isField : IsField ≈ᵏ-isEquiv _+ᵏ_ _*ᵏ_ 0ᵏ 1ᵏ -ᵏ_ _⁻¹ᵏ)
   where
 
-open IsEquivalence isEquivᵏ renaming
+open IsEquivalence ≈ᵏ-isEquiv renaming
   ( refl  to ≈ᵏ-refl
   ; sym   to ≈ᵏ-sym
   ; trans to ≈ᵏ-trans
@@ -52,11 +52,11 @@ open IsField isField
 
 open import Level    using (_⊔_)
 
-data Vector : ℕ → Set (k ⊔ a) where
+data Vector : ℕ → Set k where
   []  : Vector 0
   _∷_ : ∀ {n} → K → Vector n → Vector (suc n)
 
-data _≈_ : ∀ {n} → Rel (Vector n) (ℓ ⊔ ℓᵏ) where
+data _≈_ : ∀ {n} → Rel (Vector n) ℓ where
   ≈-null : [] ≈ []
   ≈-cons : ∀ {n} {x y : K} {xs ys : Vector n} → x ≈ᵏ y → xs ≈ ys → (x ∷ xs) ≈ (y ∷ ys)
 
@@ -135,6 +135,10 @@ k ∙ (x ∷ xs) = (k *ᵏ x) ∷ (k ∙ xs)
 ∙-+ᵏ-distrib a b [] = ≈-null
 ∙-+ᵏ-distrib a b (x ∷ u) = ≈-cons (*ᵏ-+ᵏ-distribʳ x a b) (∙-+ᵏ-distrib a b u)
 
+∙-cong : ∀ {n} (a : K) (u v : Vector n) → u ≈ v -> (a ∙ u) ≈ (a ∙ v)
+∙-cong a [] [] ≈-null = ≈-null
+∙-cong a (x ∷ xs) (y ∷ ys) (≈-cons r rs) = ≈-cons (*ᵏ-cong ≈ᵏ-refl r) (∙-cong a xs ys rs)
+
 ∙-identity : ∀ {n} (x : Vector n) → (1ᵏ ∙ x) ≈ x
 ∙-identity [] = ≈-null
 ∙-identity (x ∷ xs) = ≈-cons (*ᵏ-identityˡ x) (∙-identity xs)
@@ -158,50 +162,64 @@ k ∙ (x ∷ xs) = (k *ᵏ x) ∷ (k ∙ xs)
 -‿cong ≈-null = ≈-null
 -‿cong (≈-cons r rs) = ≈-cons (-ᵏ‿cong r) (-‿cong rs)
 
-+-isMagma : ∀ {n} -> IsMagma (_≈_ {n}) _+_
-+-isMagma = record
+isMagma : ∀ {n} -> IsMagma (_≈_ {n}) _+_
+isMagma = record
   { isEquivalence = ≈-isEquiv
   ; ∙-cong        = +-cong
   }
 
-+-isSemigroup : ∀ {n} -> IsSemigroup (_≈_ {n}) _+_
-+-isSemigroup = record
-  { isMagma = +-isMagma
+isSemigroup : ∀ {n} -> IsSemigroup (_≈_ {n}) _+_
+isSemigroup = record
+  { isMagma = isMagma
   ; assoc   = +-assoc
   }
 
-+-isMonoid : ∀ {n} -> IsMonoid (_≈_ {n}) _+_ 0#
-+-isMonoid = record
-  { isSemigroup = +-isSemigroup
+isMonoid : ∀ {n} -> IsMonoid (_≈_ {n}) _+_ 0#
+isMonoid = record
+  { isSemigroup = isSemigroup
   ; identity    = +-identity
   }
 
-+-isGroup : ∀ {n} -> IsGroup (_≈_ {n}) _+_ 0# -_
-+-isGroup = record
-  { isMonoid = +-isMonoid
+isGroup : ∀ {n} -> IsGroup (_≈_ {n}) _+_ 0# -_
+isGroup = record
+  { isMonoid = isMonoid
   ; inverse  = -‿inverse
   ; ⁻¹-cong   = -‿cong
   }
 
-+-isAbelianGroup : ∀ {n} -> IsAbelianGroup (_≈_ {n}) _+_ 0# -_
-+-isAbelianGroup = record
-  { isGroup = +-isGroup
+isAbelianGroup : ∀ {n} -> IsAbelianGroup (_≈_ {n}) _+_ 0# -_
+isAbelianGroup = record
+  { isGroup = isGroup
   ; comm    = +-comm
   }
 
-open import Algebra.Linear.Structures.VectorSpace  {a ⊔ k} {k} {ℓ ⊔ ℓᵏ} {ℓᵏ} {K = K} isField
+open import Algebra.Linear.Structures.VectorSpace isField
 
-+-∙-isVectorSpace : ∀ {n} -> IsVectorSpace (≈-isEquiv {n}) _+_ _∙_ -_ 0#
-+-∙-isVectorSpace = record
-  { +-isAbelianGroup = +-isAbelianGroup
+isVectorSpace : ∀ {n} -> IsVectorSpace (≈-isEquiv {n}) _+_ _∙_ -_ 0#
+isVectorSpace = record
+  { +-isAbelianGroup = isAbelianGroup
   ; *ᵏ-∙-compat      = *ᵏ-∙-compat
   ; ∙-+-distrib      = ∙-+-distrib
   ; ∙-+ᵏ-distrib     = ∙-+ᵏ-distrib
+  ; ∙-cong           = ∙-cong
   ; ∙-identity       = ∙-identity
   ; ∙-absorb         = ∙-absorb
   }
 
-+-∙-isFiniteDimensional : ∀ {n} -> IsFiniteDimensional (≈-isEquiv {n}) _+_ _∙_ -_ 0# n
-+-∙-isFiniteDimensional {n} = record
-  { isVectorSpace = +-∙-isVectorSpace
+open import Algebra.Linear.Morphism.VectorSpace isField
+
+embed : ∀ {n} -> Vector n -> Vector n
+embed u = u
+
+embed-isLinear : ∀ {n} -> IsLinearEndomorphism (isVectorSpace {n}) embed
+embed-isLinear {n} = record
+  { linear = λ a b u v → +-cong ≈-refl (∙-cong b v v ≈-refl)
+  }
+
+embed-isIsomorphism : ∀ {n} -> IsLinearAutomorphism (isVectorSpace {n}) embed embed
+embed-isIsomorphism {n} = record
+  { μ-isLinear  = embed-isLinear
+  ; μ⁻¹-isLinear = embed-isLinear
+  ; μ∘μ⁻¹≈₂id    = λ x -> ≈-refl
+  ; μ⁻¹∘μ≈₁id    = λ x -> ≈-refl
   }

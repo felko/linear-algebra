@@ -7,7 +7,7 @@ import Algebra.FunctionProperties as FP
 open import Data.Product
 open import Data.Nat using (ℕ; zero; suc)
 
-module Data.Linear.ProductSpace
+module Algebra.Linear.Construct.ProductSpace
   {a₁ a₂ k ℓ₁ ℓ₂ ℓᵏ} {K : Set k}
   {_≈ᵏ_ : Rel K ℓᵏ}
   (≈ᵏ-isEquiv : IsEquivalence _≈ᵏ_)
@@ -140,6 +140,10 @@ k ∙ (x₁ , x₂) = (k ∙₁ x₁ , k ∙₂ x₂)
 ∙-+ᵏ-distrib a b  (x₁ , x₂) = ( IsVectorSpace.∙-+ᵏ-distrib isVectorSpace₁ a b x₁
                              , IsVectorSpace.∙-+ᵏ-distrib isVectorSpace₂ a b x₂ )
 
+∙-cong : ∀ (a : K) (u v : V) -> u ≈ v -> (a ∙ u) ≈ (a ∙ v)
+∙-cong a (x₁ , x₂) (y₁ , y₂) (r₁ , r₂) = ( IsVectorSpace.∙-cong isVectorSpace₁ a x₁ y₁ r₁
+                                        , IsVectorSpace.∙-cong isVectorSpace₂ a x₂ y₂ r₂ )
+
 ∙-identity : ∀ (x : V) → (1ᵏ ∙ x) ≈ x
 ∙-identity (x₁ , x₂) = ( IsVectorSpace.∙-identity isVectorSpace₁ x₁
                        , IsVectorSpace.∙-identity isVectorSpace₂ x₂ )
@@ -194,7 +198,7 @@ k ∙ (x₁ , x₂) = (k ∙₁ x₁ , k ∙₂ x₂)
   ; comm    = +-comm
   }
 
-import Algebra.Linear.Structures.VectorSpace {a₁ ⊔ a₂} {k} {ℓ₁ ⊔ ℓ₂} {ℓᵏ} {K = K} isField as VS
+import Algebra.Linear.Structures.VectorSpace {k} {ℓᵏ} {K = K} isField as VS
 
 +-∙-isVectorSpace : VS.IsVectorSpace ≈-isEquiv _+_ _∙_ -_ 0#
 +-∙-isVectorSpace = record
@@ -202,6 +206,7 @@ import Algebra.Linear.Structures.VectorSpace {a₁ ⊔ a₂} {k} {ℓ₁ ⊔ ℓ
   ; *ᵏ-∙-compat      = *ᵏ-∙-compat
   ; ∙-+-distrib      = ∙-+-distrib
   ; ∙-+ᵏ-distrib     = ∙-+ᵏ-distrib
+  ; ∙-cong           = ∙-cong
   ; ∙-identity       = ∙-identity
   ; ∙-absorb         = ∙-absorb
   }
