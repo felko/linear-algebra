@@ -1,9 +1,8 @@
-open import Relation.Binary using (Rel)
-
 module Algebra.Linear.Structures.Bundles.Field where
 
 open import Algebra
 open import Level using (suc; _⊔_)
+open import Relation.Binary using (Rel)
 
 open import Algebra.Linear.Core
 open import Algebra.Linear.Structures.Field

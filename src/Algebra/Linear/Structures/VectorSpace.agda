@@ -1,12 +1,11 @@
-open import Relation.Binary using (Rel; IsEquivalence)
 open import Algebra.Linear.Structures.Bundles.Field
-
-open import Algebra.FunctionProperties
 
 module Algebra.Linear.Structures.VectorSpace
   {k ℓᵏ} (K : Field k ℓᵏ)
   where
 
+open import Algebra.FunctionProperties
+open import Relation.Binary using (Rel)
 open import Level using (_⊔_)
 open import Data.Nat using (ℕ)
 

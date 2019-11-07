@@ -1,16 +1,17 @@
-open import Relation.Binary
-open import Algebra.Linear.Core
 open import Algebra.Linear.Structures.Bundles.Field
 
-open import Algebra.FunctionProperties
+module Algebra.Linear.Construct.Vector
+  {k ℓ} (K : Field k ℓ)
+  where
 
 open import Level using (_⊔_)
 open import Data.Product
 open import Data.Nat hiding (_⊔_) renaming (_+_ to _+ℕ_)
 
-module Algebra.Linear.Construct.Vector
-  {k ℓ} (K : Field k ℓ)
-  where
+open import Relation.Binary
+open import Algebra.Linear.Core
+open import Algebra.FunctionProperties
+
 
 open import Relation.Binary.PropositionalEquality as P
   using (_≡_; subst; subst-subst-sym)

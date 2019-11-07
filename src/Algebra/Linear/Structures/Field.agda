@@ -1,4 +1,4 @@
-open import Relation.Binary using (Rel; IsEquivalence)
+open import Relation.Binary using (Rel)
 
 module Algebra.Linear.Structures.Field
   {a ℓ} {A : Set a}

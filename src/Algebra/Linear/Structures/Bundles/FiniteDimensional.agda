@@ -1,11 +1,10 @@
-open import Relation.Binary using (Rel; IsEquivalence)
 open import Algebra.Linear.Structures.Field
-
-open import Algebra.FunctionProperties
 
 module Algebra.Linear.Structures.Bundles.FiniteDimensional where
 
 open import Algebra
+open import Algebra.FunctionProperties
+open import Relation.Binary using (Rel)
 open import Level using (Level; suc; _⊔_)
 
 open import Algebra.Linear.Structures.Bundles.Field

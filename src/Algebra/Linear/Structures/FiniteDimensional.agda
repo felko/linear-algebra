@@ -1,13 +1,12 @@
-open import Relation.Binary using (Rel; IsEquivalence)
-
-open import Algebra.Linear.Core
 open import Algebra.Linear.Structures.Bundles.Field
-
-open import Algebra.FunctionProperties
 
 module Algebra.Linear.Structures.FiniteDimensional
   {k ℓᵏ} (K : Field k ℓᵏ)
   where
+
+open import Algebra.Linear.Core
+open import Algebra.FunctionProperties
+open import Relation.Binary using (Rel)
 
 import Algebra.Linear.Morphism.Bundles K as MorphismBundles
 open MorphismBundles.VectorSpace

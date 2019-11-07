@@ -1,5 +1,3 @@
-open import Relation.Binary
-open import Algebra.Linear.Structures.VectorSpace
 open import Algebra.Linear.Structures.Bundles.Field
 open import Algebra.Linear.Structures.Bundles
 
@@ -12,6 +10,9 @@ module Algebra.Linear.Construct.ProductSpace
   {a₁ ℓ₁} (V₁-space : VectorSpace K a₁ ℓ₁)
   {a₂ ℓ₂} (V₂-space : VectorSpace K a₂ ℓ₂)
   where
+
+open import Relation.Binary
+open import Algebra.Linear.Structures.VectorSpace
 
 open VectorSpaceField K
 

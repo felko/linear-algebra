@@ -1,4 +1,4 @@
-open import Relation.Binary.Core
+open import Relation.Binary using (Rel)
 
 open import Algebra.Linear.Structures.Bundles.Field
 
