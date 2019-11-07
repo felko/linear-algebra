@@ -1,43 +1,47 @@
 open import Relation.Binary using (Rel; IsEquivalence)
-open import Algebra.Linear.Structures.Field
+
+open import Algebra.Linear.Core
+open import Algebra.Linear.Structures.Bundles.Field
 
 open import Algebra.FunctionProperties
 
 module Algebra.Linear.Structures.FiniteDimensional
-  {k ℓᵏ} {K : Set k}
-  {_≈ᵏ_ : Rel K ℓᵏ} {≈ᵏ-isEquiv : IsEquivalence _≈ᵏ_}
-  {_+ᵏ_ _*ᵏ_ : Op₂ K} {0ᵏ 1ᵏ : K} { -ᵏ_ : Op₁ K } {_⁻¹ : MultiplicativeInverse ≈ᵏ-isEquiv 0ᵏ}
-  (isField : IsField ≈ᵏ-isEquiv _+ᵏ_ _*ᵏ_ 0ᵏ 1ᵏ -ᵏ_ _⁻¹)
+  {k ℓᵏ} (K : Field k ℓᵏ)
   where
 
-open import Algebra.Linear.Morphism.VectorSpace isField
-open import Algebra.Linear.Structures.VectorSpace isField
+import Algebra.Linear.Morphism.Bundles K as MorphismBundles
+open MorphismBundles.VectorSpace
+
+open import Algebra.Linear.Structures.VectorSpace K
+
+open import Function.Equality
 
 open import Level using (_⊔_)
 open import Data.Nat hiding (_⊔_)
-import Algebra.Linear.Construct.Vector ≈ᵏ-isEquiv isField as Vec
+import Algebra.Linear.Construct.Vector K as Vec
+
+private
+  K' : Set k
+  K' = Field.Carrier K
 
 record IsFiniteDimensional
-       {v ℓ} {V : Set v}
-       {_≈_ : Rel V ℓ} (isEquiv : IsEquivalence _≈_)
-       (_+_ : Op₂ V) (_∙_ : K → V → V) (-_ : Op₁ V) (0# : V)
+       {v ℓ} {V : Set v}
+       (_≈_ : Rel V ℓ)
+       (_+_ : Op₂ V) (_∙_ : K' → V → V) (-_ : Op₁ V) (0# : V)
        (n : ℕ) : Set (v ⊔ k ⊔ ℓ ⊔ ℓᵏ)
-       where
+    where
   field
-    isVectorSpace       : IsVectorSpace isEquiv _+_ _∙_ -_ 0#
-    to                  : V -> Vec.Vector n
-    from                : Vec.Vector n -> V
-    embed-isIsomorphism : IsLinearIsomorphism isVectorSpace (Vec.isVectorSpace {n}) to from
+    isVectorSpace : IsVectorSpace _≈_ _+_ _∙_ -_ 0#
+    embed         : LinearIsomorphism (record { isVectorSpace = isVectorSpace })
+                                      (record { isVectorSpace = Vec.isVectorSpace {n} })
 
-  open IsVectorSpace isEquiv isVectorSpace public
+  open IsVectorSpace isVectorSpace public
 
 module Vector {n} where
-  open Vec public
+  open Vec
 
-  isFiniteDimensional : IsFiniteDimensional Vec.≈-isEquiv Vec._+_ Vec._∙_ Vec.-_ 0# n
+  isFiniteDimensional : IsFiniteDimensional (Vec._≈_) (Vec._+_) (Vec._∙_) (Vec.-_) (Vec.0#) n
   isFiniteDimensional = record
-    { isVectorSpace       = isVectorSpace
-    ; to                  = embed
-    ; from                = embed
-    ; embed-isIsomorphism = embed-isIsomorphism
+    { isVectorSpace = Vec.isVectorSpace
+    ; embed         = Vec.embed
     }

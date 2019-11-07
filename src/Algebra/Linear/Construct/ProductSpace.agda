@@ -1,72 +1,78 @@
 open import Relation.Binary
-open import Algebra.Linear.Structures.Field
 open import Algebra.Linear.Structures.VectorSpace
+open import Algebra.Linear.Structures.Bundles.Field
+open import Algebra.Linear.Structures.Bundles
 
 import Algebra.FunctionProperties as FP
 
-open import Data.Product
-open import Data.Nat using (ℕ; zero; suc)
+open import Data.Nat using (ℕ; zero; suc) renaming (_+_ to _+ℕ_)
 
 module Algebra.Linear.Construct.ProductSpace
-  {a₁ a₂ k ℓ₁ ℓ₂ ℓᵏ} {K : Set k}
-  {_≈ᵏ_ : Rel K ℓᵏ}
-  (≈ᵏ-isEquiv : IsEquivalence _≈ᵏ_)
-  {_+ᵏ_ _*ᵏ_ : FP.Op₂ K} {0ᵏ 1ᵏ : K} { -ᵏ_ : FP.Op₁ K } {_⁻¹ᵏ : MultiplicativeInverse ≈ᵏ-isEquiv 0ᵏ}
-  (isField : IsField ≈ᵏ-isEquiv _+ᵏ_ _*ᵏ_ 0ᵏ 1ᵏ -ᵏ_ _⁻¹ᵏ)
-  {V₁ : Set a₁} {_≈₁_ : Rel V₁ ℓ₁} {≈₁-isEquiv : IsEquivalence _≈₁_}
-  {_+₁_ : FP.Op₂ V₁} {_∙₁_ : K → V₁ -> V₁} { -₁_ : FP.Op₁ V₁ } {0₁ : V₁}
-  (isVectorSpace₁ : IsVectorSpace isField ≈₁-isEquiv _+₁_ _∙₁_ -₁_ 0₁)
-  {V₂ : Set a₂}  {_≈₂_ : Rel V₂ ℓ₂} {≈₂-isEquiv : IsEquivalence _≈₂_}
-  {_+₂_ : FP.Op₂ V₂} {_∙₂_ : K → V₂ -> V₂} { -₂_ : FP.Op₁ V₂ } {0₂ : V₂}
-  (isVectorSpace₂ : IsVectorSpace isField ≈₂-isEquiv _+₂_ _∙₂_ -₂_ 0₂)
+  {k ℓ} (K : Field k ℓ)
+  {a₁ ℓ₁} (V₁-space : VectorSpace K a₁ ℓ₁)
+  {a₂ ℓ₂} (V₂-space : VectorSpace K a₂ ℓ₂)
   where
 
-open IsEquivalence ≈ᵏ-isEquiv renaming
-  ( refl  to ≈ᵏ-refl
-  ; sym   to ≈ᵏ-sym
-  ; trans to ≈ᵏ-trans
-  )
+open VectorSpaceField K
 
-open IsEquivalence ≈₁-isEquiv renaming
-  ( refl  to ≈₁-refl
-  ; sym   to ≈₁-sym
-  ; trans to ≈₁-trans
-  )
-
-open IsEquivalence ≈₂-isEquiv renaming
-  ( refl  to ≈₂-refl
-  ; sym   to ≈₂-sym
-  ; trans to ≈₂-trans
-  )
-
-open IsField isField
-  hiding (+-isMagma; +-isSemigroup; +-isMonoid; +-isGroup; +-isAbelianGroup)
+open VectorSpace V₁-space
+  using ()
   renaming
-  ( +-cong        to +ᵏ-cong
-  ; *-cong        to *ᵏ-cong
-  ; +-identity    to +ᵏ-identity
-  ; +-identityˡ    to +ᵏ-identityˡ
-  ; +-identityʳ    to +ᵏ-identityʳ
-  ; *-identity    to *ᵏ-identity
-  ; *-identityˡ    to *ᵏ-identityˡ
-  ; *-identityʳ    to *ᵏ-identityʳ
-  ; zero          to *ᵏ-zero
-  ; zeroˡ          to *ᵏ-zeroˡ
-  ; zeroʳ          to *ᵏ-zeroʳ
-  ; +-comm        to +ᵏ-comm
-  ; +-assoc       to +ᵏ-assoc
-  ; *-assoc       to *ᵏ-assoc
-  ; distrib       to *ᵏ-+ᵏ-distrib
-  ; distribˡ      to *ᵏ-+ᵏ-distribˡ
-  ; distribʳ      to *ᵏ-+ᵏ-distribʳ
-  ; -‿cong       to -ᵏ‿cong
-  ; -‿inverse    to -ᵏ‿inverse
-  ; -‿inverseˡ    to -ᵏ‿inverseˡ
-  ; -‿inverseʳ    to -ᵏ‿inverseʳ
-  ; _-_           to _-ᵏ_
-  ; _⁻¹-inverse    to _⁻¹ᵏ-inverse
-  ; _⁻¹-involutive to _⁻¹ᵏ-involutive
-  ; 0#-not-1#     to 0ᵏ-not-1ᵏ
+  ( Carrier       to V₁
+  ; _≈_           to _≈₁_
+  ; isEquivalence to ≈₁-isEquiv
+  ; refl          to ≈₁-refl
+  ; sym           to ≈₁-sym
+  ; trans         to ≈₁-trans
+  ; _+_           to _+₁_
+  ; _∙_           to _∙₁_
+  ; -_            to -₁_
+  ; 0#            to 0₁
+  ; +-identityˡ    to +₁-identityˡ
+  ; +-identityʳ    to +₁-identityʳ
+  ; +-identity    to +₁-identity
+  ; +-cong        to +₁-cong
+  ; +-assoc       to +₁-assoc
+  ; +-comm        to +₁-comm
+  ; *ᵏ-∙-compat   to *ᵏ-∙₁-compat
+  ; ∙-+-distrib   to ∙₁-+₁-distrib
+  ; ∙-+ᵏ-distrib  to ∙₁-+ᵏ-distrib
+  ; ∙-cong        to ∙₁-cong
+  ; ∙-identity    to ∙₁-identity
+  ; ∙-absorb      to ∙₁-absorb
+  ; -‿cong        to -₁‿cong
+  ; -‿inverseˡ    to -₁‿inverseˡ
+  ; -‿inverseʳ    to -₁‿inverseʳ
+  )
+
+open VectorSpace V₂-space
+  using ()
+  renaming
+  ( Carrier       to V₂
+  ; _≈_           to _≈₂_
+  ; isEquivalence to ≈₂-isEquiv
+  ; refl          to ≈₂-refl
+  ; sym           to ≈₂-sym
+  ; trans         to ≈₂-trans
+  ; _+_           to _+₂_
+  ; _∙_           to _∙₂_
+  ; -_            to -₂_
+  ; 0#            to 0₂
+  ; +-identityˡ    to +₂-identityˡ
+  ; +-identityʳ    to +₂-identityʳ
+  ; +-identity    to +₂-identity
+  ; +-cong        to +₂-cong
+  ; +-assoc       to +₂-assoc
+  ; +-comm        to +₂-comm
+  ; *ᵏ-∙-compat   to *ᵏ-∙₂-compat
+  ; ∙-+-distrib   to ∙₂-+₂-distrib
+  ; ∙-+ᵏ-distrib  to ∙₂-+ᵏ-distrib
+  ; ∙-cong        to ∙₂-cong
+  ; ∙-identity    to ∙₂-identity
+  ; ∙-absorb      to ∙₂-absorb
+  ; -‿cong        to -₂‿cong
+  ; -‿inverseˡ    to -₂‿inverseˡ
+  ; -‿inverseʳ    to -₂‿inverseʳ
   )
 
 open import Level using (_⊔_)
@@ -84,6 +90,13 @@ _≈_ = Pointwise _≈₁_ _≈₂_
 ≈-isEquiv : IsEquivalence _≈_
 ≈-isEquiv = ×-isEquivalence ≈₁-isEquiv ≈₂-isEquiv
 
+prod-setoid : Setoid (a₁ ⊔ a₂) (ℓ₁ ⊔ ℓ₂)
+prod-setoid = record
+  { Carrier       = V
+  ; _≈_           = _≈_
+  ; isEquivalence = ≈-isEquiv
+  }
+
 open IsEquivalence ≈-isEquiv renaming
   ( refl  to ≈-refl
   ; sym   to ≈-sym
@@ -99,110 +112,96 @@ open import Algebra.Structures _≈_
 -_ : Op₁ V
 - (x₁ , x₂) = (-₁ x₁ , -₂ x₂)
 
+infixr 25 _+_
 _+_ : Op₂ V
 (x₁ , x₂) + (y₁ , y₂) = (x₁ +₁ y₁ , x₂ +₂ y₂)
 
-_∙_ : K -> V -> V
+infixr 30 _∙_
+_∙_ : K' -> V -> V
 k ∙ (x₁ , x₂) = (k ∙₁ x₁ , k ∙₂ x₂)
 
 +-cong : Congruent₂ _+_
-+-cong r₁ r₂ = ( IsVectorSpace.+-cong isVectorSpace₁ (proj₁ r₁) (proj₁ r₂)
-              , IsVectorSpace.+-cong isVectorSpace₂ (proj₂ r₁) (proj₂ r₂))
++-cong (r₁ , r₂) (s₁ , s₂) = ( +₁-cong r₁ s₁ , +₂-cong r₂ s₂ )
 
 +-assoc : Associative _+_
-+-assoc (x₁ , x₂) (y₁ , y₂) (z₁ , z₂) = ( IsVectorSpace.+-assoc isVectorSpace₁ x₁ y₁ z₁
-                                       , IsVectorSpace.+-assoc isVectorSpace₂ x₂ y₂ z₂ )
++-assoc (x₁ , x₂) (y₁ , y₂) (z₁ , z₂) = ( +₁-assoc x₁ y₁ z₁ , +₂-assoc x₂ y₂ z₂ )
 
 +-identityˡ : LeftIdentity 0# _+_
-+-identityˡ (x₁ , x₂) = ( IsVectorSpace.+-identityˡ isVectorSpace₁ x₁
-                       , IsVectorSpace.+-identityˡ isVectorSpace₂ x₂ )
++-identityˡ (x₁ , x₂) = ( +₁-identityˡ x₁ , +₂-identityˡ x₂ )
 
 +-identityʳ : RightIdentity 0# _+_
-+-identityʳ (x₁ , x₂) = ( IsVectorSpace.+-identityʳ isVectorSpace₁ x₁
-                       , IsVectorSpace.+-identityʳ isVectorSpace₂ x₂ )
++-identityʳ (x₁ , x₂) = ( +₁-identityʳ x₁ , +₂-identityʳ x₂ )
 
 +-identity : Identity 0# _+_
 +-identity = +-identityˡ , +-identityʳ
 
 +-comm : Commutative _+_
-+-comm (x₁ , x₂) (y₁ , y₂) = ( IsVectorSpace.+-comm isVectorSpace₁ x₁ y₁
-                            , IsVectorSpace.+-comm isVectorSpace₂ x₂ y₂ )
++-comm (x₁ , x₂) (y₁ , y₂) = ( +₁-comm x₁ y₁ , +₂-comm x₂ y₂ )
 
-*ᵏ-∙-compat : ∀ (a b : K) (u : V) -> ((a *ᵏ b) ∙ u) ≈ (a ∙ (b ∙ u))
-*ᵏ-∙-compat a b (x₁ , x₂) = ( IsVectorSpace.*ᵏ-∙-compat isVectorSpace₁ a b x₁
-                           , IsVectorSpace.*ᵏ-∙-compat isVectorSpace₂ a b x₂ )
+*ᵏ-∙-compat : ∀ (a b : K') (u : V) -> ((a *ᵏ b) ∙ u) ≈ (a ∙ (b ∙ u))
+*ᵏ-∙-compat a b (x₁ , x₂) = ( *ᵏ-∙₁-compat a b x₁ , *ᵏ-∙₂-compat a b x₂ )
 
-∙-+-distrib : ∀ (a : K) (u v : V) -> (a ∙ (u + v)) ≈ ((a ∙ u) + (a ∙ v))
-∙-+-distrib a (x₁ , x₂) (y₁ , y₂) = ( IsVectorSpace.∙-+-distrib isVectorSpace₁ a x₁ y₁
-                                   , IsVectorSpace.∙-+-distrib isVectorSpace₂ a x₂ y₂ )
+∙-+-distrib : ∀ (a : K') (u v : V) -> (a ∙ (u + v)) ≈ ((a ∙ u) + (a ∙ v))
+∙-+-distrib a (x₁ , x₂) (y₁ , y₂) = ( ∙₁-+₁-distrib a x₁ y₁ , ∙₂-+₂-distrib a x₂ y₂ )
 
-∙-+ᵏ-distrib : ∀ (a b : K) (u : V) -> ((a +ᵏ b) ∙ u) ≈ ((a ∙ u) + (b ∙ u))
-∙-+ᵏ-distrib a b  (x₁ , x₂) = ( IsVectorSpace.∙-+ᵏ-distrib isVectorSpace₁ a b x₁
-                             , IsVectorSpace.∙-+ᵏ-distrib isVectorSpace₂ a b x₂ )
+∙-+ᵏ-distrib : ∀ (a b : K') (u : V) -> ((a +ᵏ b) ∙ u) ≈ ((a ∙ u) + (b ∙ u))
+∙-+ᵏ-distrib a b  (x₁ , x₂) = ( ∙₁-+ᵏ-distrib a b x₁ , ∙₂-+ᵏ-distrib a b x₂ )
 
-∙-cong : ∀ (a : K) (u v : V) -> u ≈ v -> (a ∙ u) ≈ (a ∙ v)
-∙-cong a (x₁ , x₂) (y₁ , y₂) (r₁ , r₂) = ( IsVectorSpace.∙-cong isVectorSpace₁ a x₁ y₁ r₁
-                                        , IsVectorSpace.∙-cong isVectorSpace₂ a x₂ y₂ r₂ )
+∙-cong : ∀ (a : K') (u v : V) -> u ≈ v -> (a ∙ u) ≈ (a ∙ v)
+∙-cong a (x₁ , x₂) (y₁ , y₂) (r₁ , r₂) = ( ∙₁-cong a x₁ y₁ r₁ , ∙₂-cong a x₂ y₂ r₂ )
 
 ∙-identity : ∀ (x : V) → (1ᵏ ∙ x) ≈ x
-∙-identity (x₁ , x₂) = ( IsVectorSpace.∙-identity isVectorSpace₁ x₁
-                       , IsVectorSpace.∙-identity isVectorSpace₂ x₂ )
+∙-identity (x₁ , x₂) = ( ∙₁-identity x₁ , ∙₂-identity x₂ )
 
 ∙-absorb : ∀ (x : V) → (0ᵏ ∙ x) ≈ 0#
-∙-absorb (x₁ , x₂) = ( IsVectorSpace.∙-absorb isVectorSpace₁ x₁
-                     , IsVectorSpace.∙-absorb isVectorSpace₂ x₂ )
+∙-absorb (x₁ , x₂) = ( ∙₁-absorb x₁ , ∙₂-absorb x₂ )
 
 -‿inverseˡ : LeftInverse 0# -_ _+_
--‿inverseˡ (x₁ , x₂) =  ( IsVectorSpace.-‿inverseˡ isVectorSpace₁ x₁
-                        , IsVectorSpace.-‿inverseˡ isVectorSpace₂ x₂ )
+-‿inverseˡ (x₁ , x₂) = ( -₁‿inverseˡ x₁ , -₂‿inverseˡ x₂ )
 
 -‿inverseʳ : RightInverse 0# -_ _+_
--‿inverseʳ (x₁ , x₂) = ( IsVectorSpace.-‿inverseʳ isVectorSpace₁ x₁
-                       , IsVectorSpace.-‿inverseʳ isVectorSpace₂ x₂ )
+-‿inverseʳ (x₁ , x₂) = ( -₁‿inverseʳ x₁ , -₂‿inverseʳ x₂ )
 
 -‿inverse : Inverse 0# -_ _+_
 -‿inverse = -‿inverseˡ , -‿inverseʳ
 
 -‿cong : Congruent₁ -_
--‿cong  (x₁ , x₂) = ( IsVectorSpace.-‿cong isVectorSpace₁ x₁
-                     , IsVectorSpace.-‿cong isVectorSpace₂ x₂ )
+-‿cong  (x₁ , x₂) = ( -₁‿cong x₁ , -₂‿cong x₂ )
 
-+-isMagma : IsMagma _+_
-+-isMagma = record
+isMagma : IsMagma _+_
+isMagma = record
   { isEquivalence = ≈-isEquiv
   ; ∙-cong        = +-cong
   }
 
-+-isSemigroup : IsSemigroup _+_
-+-isSemigroup = record
-  { isMagma = +-isMagma
+isSemigroup : IsSemigroup _+_
+isSemigroup = record
+  { isMagma = isMagma
   ; assoc   = +-assoc
   }
 
-+-isMonoid : IsMonoid _+_ 0#
-+-isMonoid = record
-  { isSemigroup = +-isSemigroup
+isMonoid : IsMonoid _+_ 0#
+isMonoid = record
+  { isSemigroup = isSemigroup
   ; identity    = +-identity
   }
 
-+-isGroup : IsGroup _+_ 0# -_
-+-isGroup = record
-  { isMonoid = +-isMonoid
+isGroup : IsGroup _+_ 0# -_
+isGroup = record
+  { isMonoid = isMonoid
   ; inverse  = -‿inverse
   ; ⁻¹-cong   = -‿cong
   }
 
-+-isAbelianGroup : IsAbelianGroup _+_ 0# -_
-+-isAbelianGroup = record
-  { isGroup = +-isGroup
+isAbelianGroup : IsAbelianGroup _+_ 0# -_
+isAbelianGroup = record
+  { isGroup = isGroup
   ; comm    = +-comm
   }
 
-import Algebra.Linear.Structures.VectorSpace {k} {ℓᵏ} {K = K} isField as VS
-
-+-∙-isVectorSpace : VS.IsVectorSpace ≈-isEquiv _+_ _∙_ -_ 0#
-+-∙-isVectorSpace = record
-  { +-isAbelianGroup = +-isAbelianGroup
+isVectorSpace : IsVectorSpace K _≈_ _+_ _∙_ -_ 0#
+isVectorSpace = record
+  { isAbelianGroup = isAbelianGroup
   ; *ᵏ-∙-compat      = *ᵏ-∙-compat
   ; ∙-+-distrib      = ∙-+-distrib
   ; ∙-+ᵏ-distrib     = ∙-+ᵏ-distrib
@@ -210,10 +209,6 @@ import Algebra.Linear.Structures.VectorSpace {k} {ℓᵏ} {K = K} isField as VS
   ; ∙-identity       = ∙-identity
   ; ∙-absorb         = ∙-absorb
   }
-{-
-+-∙-isFiniteDimensional : ∀ {n} -> IsFiniteDimensional (≈-isEquiv {n}) _+_ _∙_ -_ 0#
-+-∙-isFiniteDimensional {n} = record
-  { isVectorSpace = +-∙-isVectorSpace
-  ; dim           = n
-  }
--}
+
+vectorSpace : VectorSpace K (a₁ ⊔ a₂)  (ℓ₁ ⊔ ℓ₂)
+vectorSpace = record { isVectorSpace = isVectorSpace }

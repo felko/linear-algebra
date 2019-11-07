@@ -1,4 +1,5 @@
 module Algebra.Linear.Construct where
 
-open import Algebra.Linear.Construct.Vector
-open import Algebra.Linear.Construct.ProductSpace
+import Algebra.Linear.Construct.Vector
+import Algebra.Linear.Construct.ProductSpace
+import Algebra.Linear.Construct.ProductSpace.FiniteDimensional
