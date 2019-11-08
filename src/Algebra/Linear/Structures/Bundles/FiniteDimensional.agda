@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K --safe #-}
+
 open import Algebra.Linear.Structures.Field
 
 module Algebra.Linear.Structures.Bundles.FiniteDimensional where

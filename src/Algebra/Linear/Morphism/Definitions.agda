@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K --safe #-}
+
 open import Relation.Binary using (Rel)
 
 open import Algebra.Linear.Structures.Bundles.Field

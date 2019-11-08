@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K --safe #-}
+
 open import Algebra.Linear.Structures.Bundles.Field
 import Algebra.Linear.Structures.Bundles.FiniteDimensional as FDB
 

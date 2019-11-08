@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K --safe #-}
+
 open import Algebra.Linear.Structures.Bundles.Field
 
 module Algebra.Linear.Construct.Vector
@@ -65,7 +67,7 @@ splitAt' {suc n} (suc i) j r (x ∷ xs) =
   let (xs₁ , xs₂) = splitAt' {n} i j (suc-injective r) xs
   in (x ∷ xs₁ , xs₂)
 
-data _≈_ : ∀ {n} -> Rel (Vector n) ℓ where
+data _≈_ : ∀ {n} -> Rel (Vector n) (k ⊔ ℓ) where
   ≈-null : [] ≈ []
   ≈-cons : ∀ {n} {x y : K'} {xs ys : Vector n} → x ≈ᵏ y → xs ≈ ys → x ∷ xs ≈ y ∷ ys
 
@@ -111,7 +113,7 @@ k ∙ (x ∷ xs) = (k *ᵏ x) ∷ (k ∙ xs)
 module HeterogeneousEquivalence where
   import Relation.Binary.Indexed.Heterogeneous as IH
 
-  data _≈ʰ_ : IH.IRel Vector (ℓ ⊔ k) where
+  data _≈ʰ_ : IH.IRel Vector (k ⊔ ℓ) where
     ≈ʰ-null : ∀ {n p} {u : Vector n} {v : Vector p} -> n ≡ 0 -> p ≡ 0 -> u ≈ʰ v
     ≈ʰ-cons : ∀ {n p} {x y : K'} {u : Vector n} {v : Vector p} -> n ≡ p -> x ≈ᵏ y -> u ≈ʰ v -> x ∷ u ≈ʰ y ∷ v
 
@@ -142,7 +144,7 @@ module HeterogeneousEquivalence where
 
   ≈ʰ-to-≈ : ∀ {n} {u v : Vector n} -> u ≈ʰ v -> u ≈ v
   ≈ʰ-to-≈ {0} {[]} {[]} ≈ʰ-zero = ≈-null
-  ≈ʰ-to-≈ {suc n} (≈ʰ-cons ≡-refl r rs) = ≈-cons r (≈ʰ-to-≈ rs)
+  ≈ʰ-to-≈ {suc n} (≈ʰ-cons _ r rs) = ≈-cons r (≈ʰ-to-≈ rs)
 
   ≈ʰ-tail : ∀ {n p} {x y : K'} {u : Vector n} {v : Vector p} -> x ∷ u ≈ʰ x ∷ v -> u ≈ʰ v
   ≈ʰ-tail (≈ʰ-cons _ _ r) = r
@@ -154,7 +156,7 @@ module HeterogeneousEquivalence where
     ; isEquivalence = ≈ʰ-isEquiv
     }
 
-setoid : ℕ -> Setoid k ℓ
+setoid : ℕ -> Setoid k (k ⊔ ℓ)
 setoid n = record
   { Carrier       = Vector n
   ; _≈_           = _≈_
@@ -361,7 +363,7 @@ module _ {n} where
     ; ∙-absorb        = ∙-absorb
     }
 
-  vectorSpace : VectorSpace K k ℓ
+  vectorSpace : VectorSpace K k (k ⊔ ℓ)
   vectorSpace = record { isVectorSpace = isVectorSpace }
 
   open import Algebra.Linear.Morphism.VectorSpace K

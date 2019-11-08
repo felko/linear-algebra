@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K --safe #-}
+
 module Algebra.Linear where
 
 open import Algebra.Linear.Core       public

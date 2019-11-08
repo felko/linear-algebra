@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K --safe #-}
+
 module Algebra.Linear.Structures.Bundles where
 
 open import Algebra

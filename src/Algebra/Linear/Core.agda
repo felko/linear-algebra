@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K --safe #-}
+
 module Algebra.Linear.Core where
 
 open import Relation.Binary
