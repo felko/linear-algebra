@@ -1,7 +1,5 @@
 {-# OPTIONS --without-K --safe #-}
 
-open import Algebra.Linear.Structures.Field
-
 module Algebra.Linear.Structures.Bundles.FiniteDimensional where
 
 open import Algebra
@@ -9,7 +7,7 @@ open import Algebra.FunctionProperties
 open import Relation.Binary using (Rel)
 open import Level using (Level; suc; _⊔_)
 
-open import Algebra.Linear.Structures.Bundles.Field
+open import Algebra.Structures.Bundles.Field
 open import Algebra.Linear.Structures.Bundles
 
 open import Algebra.Linear.Structures.VectorSpace

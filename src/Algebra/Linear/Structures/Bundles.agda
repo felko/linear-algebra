@@ -7,8 +7,8 @@ open import Level using (Level; suc; _⊔_)
 open import Relation.Binary using (Rel; IsEquivalence)
 
 open import Algebra.FunctionProperties
-open import Algebra.Linear.Structures.Field
-open import Algebra.Linear.Structures.Bundles.Field
+open import Algebra.Structures.Field
+open import Algebra.Structures.Bundles.Field
 open import Algebra.Linear.Structures.VectorSpace
 
 record RawVectorSpace {k ℓᵏ} (K : Field k ℓᵏ) (c ℓ : Level) : Set (suc (c ⊔ k ⊔ ℓ)) where
@@ -30,7 +30,7 @@ record RawVectorSpace {k ℓᵏ} (K : Field k ℓᵏ) (c ℓ : Level) : Set (suc
   open RawGroup rawGroup public
     using (rawMagma; rawMonoid)
 
-record VectorSpace {k ℓᵏ} (K : Field k ℓᵏ) (c ℓ : Level) : Set (suc (c ⊔ k ⊔ ℓ)) where
+record VectorSpace {k ℓᵏ} (K : Field k ℓᵏ) (c ℓ : Level) : Set (suc (c ⊔ k ⊔ ℓ ⊔ ℓᵏ)) where
   infix  20 _≈_
   infixl 25 _+_
   infixr 30 _∙_

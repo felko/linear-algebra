@@ -1,11 +1,7 @@
 {-# OPTIONS --without-K --safe #-}
 
-open import Algebra.Linear.Structures.Bundles.Field
+open import Algebra.Structures.Bundles.Field
 open import Algebra.Linear.Structures.Bundles
-
-import Algebra.FunctionProperties as FP
-
-open import Data.Nat using (ℕ; zero; suc) renaming (_+_ to _+ℕ_)
 
 module Algebra.Linear.Construct.ProductSpace
   {k ℓ} (K : Field k ℓ)
@@ -14,7 +10,10 @@ module Algebra.Linear.Construct.ProductSpace
   where
 
 open import Relation.Binary
+open import Level using (_⊔_)
+open import Data.Nat using (ℕ; zero; suc) renaming (_+_ to _+ℕ_)
 open import Algebra.Linear.Structures.VectorSpace
+import Algebra.FunctionProperties as FP
 
 open VectorSpaceField K
 
@@ -42,7 +41,8 @@ open VectorSpace V₁-space
   ; ∙-+ᵏ-distrib  to ∙₁-+ᵏ-distrib
   ; ∙-cong        to ∙₁-cong
   ; ∙-identity    to ∙₁-identity
-  ; ∙-absorb      to ∙₁-absorb
+  ; ∙-absorbˡ      to ∙₁-absorbˡ
+  ; ∙-absorbʳ      to ∙₁-absorbʳ
   ; -‿cong        to -₁‿cong
   ; -‿inverseˡ    to -₁‿inverseˡ
   ; -‿inverseʳ    to -₁‿inverseʳ
@@ -72,13 +72,12 @@ open VectorSpace V₂-space
   ; ∙-+ᵏ-distrib  to ∙₂-+ᵏ-distrib
   ; ∙-cong        to ∙₂-cong
   ; ∙-identity    to ∙₂-identity
-  ; ∙-absorb      to ∙₂-absorb
+  ; ∙-absorbˡ      to ∙₂-absorbˡ
+  ; ∙-absorbʳ      to ∙₂-absorbʳ
   ; -‿cong        to -₂‿cong
   ; -‿inverseˡ    to -₂‿inverseˡ
   ; -‿inverseʳ    to -₂‿inverseʳ
   )
-
-open import Level using (_⊔_)
 
 open import Data.Product
 open import Data.Product.Relation.Binary.Pointwise.NonDependent
@@ -150,14 +149,14 @@ k ∙ (x₁ , x₂) = (k ∙₁ x₁ , k ∙₂ x₂)
 ∙-+ᵏ-distrib : ∀ (a b : K') (u : V) -> ((a +ᵏ b) ∙ u) ≈ ((a ∙ u) + (b ∙ u))
 ∙-+ᵏ-distrib a b  (x₁ , x₂) = ( ∙₁-+ᵏ-distrib a b x₁ , ∙₂-+ᵏ-distrib a b x₂ )
 
-∙-cong : ∀ (a : K') (u v : V) -> u ≈ v -> (a ∙ u) ≈ (a ∙ v)
-∙-cong a (x₁ , x₂) (y₁ , y₂) (r₁ , r₂) = ( ∙₁-cong a x₁ y₁ r₁ , ∙₂-cong a x₂ y₂ r₂ )
+∙-cong : ∀ {a b : K'} {u v : V} -> a ≈ᵏ b -> u ≈ v -> (a ∙ u) ≈ (b ∙ v)
+∙-cong rₓ (r₁ , r₂) = ( ∙₁-cong rₓ r₁ , ∙₂-cong rₓ r₂ )
 
 ∙-identity : ∀ (x : V) → (1ᵏ ∙ x) ≈ x
 ∙-identity (x₁ , x₂) = ( ∙₁-identity x₁ , ∙₂-identity x₂ )
 
-∙-absorb : ∀ (x : V) → (0ᵏ ∙ x) ≈ 0#
-∙-absorb (x₁ , x₂) = ( ∙₁-absorb x₁ , ∙₂-absorb x₂ )
+∙-absorbˡ : ∀ (x : V) → (0ᵏ ∙ x) ≈ 0#
+∙-absorbˡ (x₁ , x₂) = ( ∙₁-absorbˡ x₁ , ∙₂-absorbˡ x₂ )
 
 -‿inverseˡ : LeftInverse 0# -_ _+_
 -‿inverseˡ (x₁ , x₂) = ( -₁‿inverseˡ x₁ , -₂‿inverseˡ x₂ )
@@ -210,7 +209,7 @@ isVectorSpace = record
   ; ∙-+ᵏ-distrib     = ∙-+ᵏ-distrib
   ; ∙-cong           = ∙-cong
   ; ∙-identity       = ∙-identity
-  ; ∙-absorb         = ∙-absorb
+  ; ∙-absorbˡ         = ∙-absorbˡ
   }
 
 vectorSpace : VectorSpace K (a₁ ⊔ a₂)  (ℓ₁ ⊔ ℓ₂)

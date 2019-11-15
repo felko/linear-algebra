@@ -1,13 +1,12 @@
 {-# OPTIONS --without-K --safe #-}
 
-module Algebra.Linear.Structures.Bundles.Field where
+module Algebra.Structures.Bundles.Field where
 
 open import Algebra
 open import Level using (suc; _⊔_)
 open import Relation.Binary using (Rel)
 
-open import Algebra.Linear.Core
-open import Algebra.Linear.Structures.Field
+open import Algebra.Structures.Field
 
 record Field c ℓ : Set (suc (c ⊔ ℓ)) where
   field

@@ -1,6 +1,6 @@
 {-# OPTIONS --without-K --safe #-}
 
-open import Algebra.Linear.Structures.Bundles.Field
+open import Algebra.Structures.Bundles.Field
 
 module Algebra.Linear.Structures.FiniteDimensional
   {k ℓᵏ} (K : Field k ℓᵏ)
@@ -10,15 +10,14 @@ open import Algebra.Linear.Core
 open import Algebra.FunctionProperties
 open import Relation.Binary using (Rel)
 
-import Algebra.Linear.Morphism.Bundles K as MorphismBundles
-open MorphismBundles.VectorSpace
+open import Algebra.Linear.Morphism.Bundles K
 
 open import Algebra.Linear.Structures.VectorSpace K
 
 open import Function.Equality
 
-open import Level using (_⊔_)
-open import Data.Nat hiding (_⊔_)
+open import Level using (_⊔_; suc)
+open import Data.Nat using (ℕ)
 import Algebra.Linear.Construct.Vector K as Vec
 
 private
@@ -29,7 +28,7 @@ record IsFiniteDimensional
        {v ℓ} {V : Set v}
        (_≈_ : Rel V ℓ)
        (_+_ : Op₂ V) (_∙_ : K' → V → V) (-_ : Op₁ V) (0# : V)
-       (n : ℕ) : Set (v ⊔ k ⊔ ℓ ⊔ ℓᵏ)
+       (n : ℕ) : Set (suc (v ⊔ k ⊔ ℓ ⊔ ℓᵏ))
     where
   field
     isVectorSpace : IsVectorSpace _≈_ _+_ _∙_ -_ 0#

@@ -1,6 +1,6 @@
 {-# OPTIONS --without-K --safe #-}
 
-open import Algebra.Linear.Structures.Bundles.Field
+open import Algebra.Structures.Bundles.Field
 
 module Algebra.Linear.Construct.Vector
   {k ℓ} (K : Field k ℓ)
@@ -274,17 +274,17 @@ splitAt'-++ {suc n} {suc p} (x ∷ xs) (y ∷ ys) =
 ∙-+ᵏ-distrib a b [] = ≈-null
 ∙-+ᵏ-distrib a b (x ∷ u) = ≈-cons (*ᵏ-+ᵏ-distribʳ x a b) (∙-+ᵏ-distrib a b u)
 
-∙-cong : ∀ {n} (a : K') (u v : Vector n) → u ≈ v -> (a ∙ u) ≈ (a ∙ v)
-∙-cong a [] [] ≈-null = ≈-null
-∙-cong a (x ∷ xs) (y ∷ ys) (≈-cons r rs) = ≈-cons (*ᵏ-cong ≈ᵏ-refl r) (∙-cong a xs ys rs)
+∙-cong : ∀ {n} {a b : K'} {u v : Vector n} → a ≈ᵏ b -> u ≈ v -> (a ∙ u) ≈ (b ∙ v)
+∙-cong rᵏ ≈-null = ≈-null
+∙-cong rᵏ (≈-cons r rs) = ≈-cons (*ᵏ-cong rᵏ r) (∙-cong rᵏ rs)
 
 ∙-identity : ∀ {n} (x : Vector n) → (1ᵏ ∙ x) ≈ x
 ∙-identity [] = ≈-null
 ∙-identity (x ∷ xs) = ≈-cons (*ᵏ-identityˡ x) (∙-identity xs)
 
-∙-absorb : ∀ {n} (x : Vector n) → (0ᵏ ∙ x) ≈ 0#
-∙-absorb [] = ≈-null
-∙-absorb (x ∷ xs) = ≈-cons (*ᵏ-zeroˡ x) (∙-absorb xs)
+∙-absorbˡ : ∀ {n} (x : Vector n) → (0ᵏ ∙ x) ≈ 0#
+∙-absorbˡ [] = ≈-null
+∙-absorbˡ (x ∷ xs) = ≈-cons (*ᵏ-zeroˡ x) (∙-absorbˡ xs)
 
 -‿inverseˡ : ∀ {n} → LeftInverse  (_≈_ {n}) 0# -_ _+_
 -‿inverseˡ [] = ≈-null
@@ -352,7 +352,7 @@ module _ {n} where
 
   open VS K
 
-  isVectorSpace : IsVectorSpace _≈_ _+_ _∙_ -_ 0#
+  isVectorSpace : VS.IsVectorSpace K (_≈_ {n}) _+_ _∙_ -_ 0#
   isVectorSpace = record
     { isAbelianGroup  = isAbelianGroup
     ; *ᵏ-∙-compat     = *ᵏ-∙-compat
@@ -360,7 +360,7 @@ module _ {n} where
     ; ∙-+ᵏ-distrib    = ∙-+ᵏ-distrib
     ; ∙-cong          = ∙-cong
     ; ∙-identity      = ∙-identity
-    ; ∙-absorb        = ∙-absorb
+    ; ∙-absorbˡ        = ∙-absorbˡ
     }
 
   vectorSpace : VectorSpace K k (k ⊔ ℓ)
@@ -368,8 +368,7 @@ module _ {n} where
 
   open import Algebra.Linear.Morphism.VectorSpace K
 
-  import Algebra.Linear.Morphism.Bundles K as Bundles
-  open Bundles.VectorSpace
+  open import Algebra.Linear.Morphism.Bundles K
 
   open import Function
 

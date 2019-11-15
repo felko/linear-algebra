@@ -1,6 +1,6 @@
 {-# OPTIONS --without-K --safe #-}
 
-open import Algebra.Linear.Structures.Bundles.Field
+open import Algebra.Structures.Bundles.Field
 import Algebra.Linear.Structures.Bundles.FiniteDimensional as FDB
 
 module Algebra.Linear.Construct.ProductSpace.FiniteDimensional
@@ -13,8 +13,7 @@ open import Algebra.Linear.Structures.VectorSpace K
 open import Algebra.Linear.Structures.Bundles as VS
 open import Algebra.Linear.Structures.FiniteDimensional K
 
-import Algebra.Linear.Morphism.Bundles K as MorphismBundles
-open MorphismBundles.VectorSpace
+open import Algebra.Linear.Morphism.Bundles K
 
 open VectorSpaceField
 
@@ -42,7 +41,8 @@ open FDB.FiniteDimensional V₁-space
   ; ∙-+ᵏ-distrib  to ∙₁-+ᵏ-distrib
   ; ∙-cong        to ∙₁-cong
   ; ∙-identity    to ∙₁-identity
-  ; ∙-absorb      to ∙₁-absorb
+  ; ∙-absorbˡ      to ∙₁-absorbˡ
+  ; ∙-absorbʳ      to ∙₁-absorbʳ
   ; -‿cong        to -₁‿cong
   ; -‿inverseˡ    to -₁‿inverseˡ
   ; -‿inverseʳ    to -₁‿inverseʳ
@@ -74,7 +74,8 @@ open FDB.FiniteDimensional V₂-space
   ; ∙-+ᵏ-distrib  to ∙₂-+ᵏ-distrib
   ; ∙-cong        to ∙₂-cong
   ; ∙-identity    to ∙₂-identity
-  ; ∙-absorb      to ∙₂-absorb
+  ; ∙-absorbˡ      to ∙₂-absorbˡ
+  ; ∙-absorbʳ      to ∙₂-absorbʳ
   ; -‿cong        to -₂‿cong
   ; -‿inverseˡ    to -₂‿inverseˡ
   ; -‿inverseʳ    to -₂‿inverseʳ

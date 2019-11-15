@@ -2,13 +2,13 @@
 
 open import Relation.Binary using (Rel)
 
-open import Algebra.Linear.Structures.Bundles.Field
+open import Algebra.Structures.Bundles.Field
 
 module Algebra.Linear.Morphism.Definitions
-  {k ℓᵏ} (K : Field k ℓᵏ)  -- The space inner field
-  {a} (A : Set a)         -- The domain of the morphism
-  {b} (B : Set b)         -- The codomain of the morphism
-  {ℓ} (_≈_ : Rel B ℓ)     -- The equality relation over the codomain
+  {k ℓᵏ} (K : Field k ℓᵏ)
+  {a} (A : Set a)
+  {b} (B : Set b)
+  {ℓ} (_≈_ : Rel B ℓ)
   where
 
 open import Algebra.Linear.Core

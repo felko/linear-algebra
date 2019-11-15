@@ -1,6 +1,6 @@
 {-# OPTIONS --without-K --safe #-}
 
-open import Algebra.Linear.Structures.Bundles.Field
+open import Algebra.Structures.Bundles.Field
 
 module Algebra.Linear.Morphism.VectorSpace
   {k ℓᵏ} (K : Field k ℓᵏ)
@@ -10,7 +10,7 @@ open import Level
 open import Algebra.FunctionProperties as FP
 import Algebra.Linear.Morphism.Definitions as LinearMorphismDefinitions
 import Algebra.Morphism as Morphism
-open import Relation.Binary using (Rel)
+open import Relation.Binary using (Rel; Setoid)
 open import Relation.Binary.Morphism.Structures
 open import Algebra.Morphism
 
@@ -18,13 +18,13 @@ open import Algebra.Linear.Core
 open import Algebra.Linear.Structures.VectorSpace K
 open import Algebra.Linear.Structures.Bundles
 
-module LinearDefinitions {a b ℓ₂} (A : Set a) (B : Set b) (_≈_ : Rel B ℓ₂) where
+module LinearDefinitions {a₁ a₂ ℓ₂} (A : Set a₁) (B : Set a₂) (_≈_ : Rel B ℓ₂) where
   open Morphism.Definitions A B _≈_ public
   open LinearMorphismDefinitions K A B _≈_ public
 
 module _
-  {a ℓ₁} (From : VectorSpace K a ℓ₁)
-  {b ℓ₂} (To   : VectorSpace K b ℓ₂)
+  {a₁ ℓ₁} (From : VectorSpace K a₁ ℓ₁)
+  {a₂ ℓ₂} (To   : VectorSpace K a₂ ℓ₂)
   where
 
   private
@@ -34,28 +34,32 @@ module _
     K' : Set k
     K' = Field.Carrier K
 
-  open F using () renaming (Carrier to A; _≈_ to ≈₁; _+_ to +₁; _∙_ to ∙₁)
-  open T using () renaming (Carrier to B; _≈_ to ≈₂; _+_ to +₂; _∙_ to ∙₂)
-  open import Function ≈₁ ≈₂
+  open F using () renaming (Carrier to A; _≈_ to _≈₁_; _+_ to _+₁_; _∙_ to _∙₁_)
+  open T using () renaming (Carrier to B; _≈_ to _≈₂_; _+_ to _+₂_; _∙_ to _∙₂_)
 
-  open LinearDefinitions (VectorSpace.Carrier From) (VectorSpace.Carrier To) ≈₂
+  open import Function _≈₁_ _≈₂_
 
-  record IsLinearMap (⟦_⟧ : Morphism) : Set (k ⊔ a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂) where
+  open LinearDefinitions (VectorSpace.Carrier From) (VectorSpace.Carrier To) _≈₂_
+
+  record IsLinearMap (⟦_⟧ : Morphism) : Set (k ⊔ a₁ ⊔ a₂ ⊔ ℓ₁ ⊔ ℓ₂) where
     field
       isAbelianGroupMorphism : IsAbelianGroupMorphism F.abelianGroup T.abelianGroup ⟦_⟧
-      ∙-homo : ScalarHomomorphism ⟦_⟧ ∙₁ ∙₂
+      ∙-homo : ScalarHomomorphism ⟦_⟧ _∙₁_ _∙₂_
 
     open IsAbelianGroupMorphism isAbelianGroupMorphism public
       renaming (∙-homo to +-homo; ε-homo to 0#-homo)
 
-  record IsLinearMonomorphism (⟦_⟧ : Morphism) : Set (k ⊔ a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂) where
+    distrib-linear : ∀ (a b : K') (u v : A) -> ⟦ a ∙₁ u +₁ b ∙₁ v ⟧ ≈₂ a ∙₂ ⟦ u ⟧ +₂ b ∙₂ ⟦ v ⟧
+    distrib-linear a b u v = T.trans (+-homo (a ∙₁ u) (b ∙₁ v)) (T.+-cong (∙-homo a u) (∙-homo b v))
+
+  record IsLinearMonomorphism (⟦_⟧ : Morphism) : Set (k ⊔ a₁ ⊔ a₂ ⊔ ℓ₁ ⊔ ℓ₂) where
     field
       isLinearMap : IsLinearMap ⟦_⟧
       injective   : Injective ⟦_⟧
 
     open IsLinearMap isLinearMap public
 
-  record IsLinearIsomorphism (⟦_⟧ : Morphism) : Set (k ⊔ a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂) where
+  record IsLinearIsomorphism (⟦_⟧ : Morphism) : Set (k ⊔ a₁ ⊔ a₂ ⊔ ℓ₁ ⊔ ℓ₂) where
     field
       isLinearMonomorphism : IsLinearMonomorphism ⟦_⟧
       surjective           : Surjective ⟦_⟧
