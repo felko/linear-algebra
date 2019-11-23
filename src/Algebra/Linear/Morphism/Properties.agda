@@ -67,7 +67,7 @@ module _
       ; 0#         to 0₂
       )
 
-  open import Function _≈₁_ _≈₂_
+  open import Function
   open import Function.Equality
 
   open LinearDefinitions (VectorSpace.Carrier From) (VectorSpace.Carrier To) _≈₂_

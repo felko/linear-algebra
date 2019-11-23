@@ -285,6 +285,7 @@ c ∙ f = record
 isMagma : IsMagma _+_
 isMagma = record
   { isEquivalence = ≈-isEquiv
+  -- I don't know how to solve this: I'd like to write simply ∙-cong = +-cong
   ; ∙-cong        = λ {f} {g} {u} {v} -> +-cong {f} {g} {u} {v}
   }
 

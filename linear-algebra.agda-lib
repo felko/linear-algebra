@@ -1,0 +1,5 @@
+name: linear-algebra
+depend:
+    standard-library
+    agda-categories
+include: src

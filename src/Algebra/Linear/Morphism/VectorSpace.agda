@@ -37,7 +37,7 @@ module _
   open F using () renaming (Carrier to A; _≈_ to _≈₁_; _+_ to _+₁_; _∙_ to _∙₁_)
   open T using () renaming (Carrier to B; _≈_ to _≈₂_; _+_ to _+₂_; _∙_ to _∙₂_)
 
-  open import Function _≈₁_ _≈₂_
+  open import Function
 
   open LinearDefinitions (VectorSpace.Carrier From) (VectorSpace.Carrier To) _≈₂_
 
@@ -55,14 +55,14 @@ module _
   record IsLinearMonomorphism (⟦_⟧ : Morphism) : Set (k ⊔ a₁ ⊔ a₂ ⊔ ℓ₁ ⊔ ℓ₂) where
     field
       isLinearMap : IsLinearMap ⟦_⟧
-      injective   : Injective ⟦_⟧
+      injective   : Injective _≈₁_ _≈₂_ ⟦_⟧
 
     open IsLinearMap isLinearMap public
 
   record IsLinearIsomorphism (⟦_⟧ : Morphism) : Set (k ⊔ a₁ ⊔ a₂ ⊔ ℓ₁ ⊔ ℓ₂) where
     field
       isLinearMonomorphism : IsLinearMonomorphism ⟦_⟧
-      surjective           : Surjective ⟦_⟧
+      surjective           : Surjective _≈₁_ _≈₂_ ⟦_⟧
 
     open IsLinearMonomorphism isLinearMonomorphism public
 

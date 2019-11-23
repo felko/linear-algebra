@@ -7,7 +7,9 @@ module Algebra.Linear.Construct.Vector
   where
 
 open import Level using (_⊔_)
-open import Data.Product
+open import Data.Product using (_×_; _,_)
+open import Data.Vec public
+import Data.Vec.Relation.Binary.Pointwise.Inductive as PW
 open import Data.Nat hiding (_⊔_) renaming (_+_ to _+ℕ_)
 
 open import Relation.Binary
@@ -42,173 +44,167 @@ open import Data.Nat.Properties
     ; +-identityʳ to +ℕ-identityʳ 
     )
 
-data Vector : ℕ → Set k where
-  []  : Vector 0
-  _∷_ : ∀ {n} → K' → Vector n → Vector (suc n)
+private
+  V : ℕ -> Set k
+  V = Vec K'
 
-infixr 40 _∷_
-
-infixl 30 _++_
-_++_ : ∀ {n p} -> Vector n -> Vector p -> Vector (n +ℕ p)
-[] ++ v = v
-(x ∷ xs) ++ v = x ∷ (xs ++ v)
-
-splitAt : ∀ {n} (k : ℕ) -> k ≤ n -> Vector n → Vector k × Vector (n ∸ k)
-splitAt {0} 0 _ [] =  ([] , [])
-splitAt {suc n} 0 _ u = ([] , u)
-splitAt {suc n} (suc k) sk≤sn (x ∷ xs) =
-  let (xs₁ , xs₂) = splitAt {n} k (≤-pred sk≤sn) xs
-  in (x ∷ xs₁ , xs₂)
-
-splitAt' : ∀ {n} (i : ℕ) (j : ℕ) -> i +ℕ j ≡ n -> Vector n → Vector i × Vector j
+splitAt' : ∀ {n} (i : ℕ) (j : ℕ) -> i +ℕ j ≡ n -> V n → V i × V j
 splitAt' {0} 0 0 r [] = ([] , [])
-splitAt' {suc n} 0 (suc j) r u = ([] , subst Vector (≡-sym r) u)
+splitAt' {suc n} 0 (suc j) r u = ([] , subst V (≡-sym r) u)
 splitAt' {suc n} (suc i) j r (x ∷ xs) =
   let (xs₁ , xs₂) = splitAt' {n} i j (suc-injective r) xs
   in (x ∷ xs₁ , xs₂)
 
-data _≈_ : ∀ {n} -> Rel (Vector n) (k ⊔ ℓ) where
-  ≈-null : [] ≈ []
-  ≈-cons : ∀ {n} {x y : K'} {xs ys : Vector n} → x ≈ᵏ y → xs ≈ ys → x ∷ xs ≈ y ∷ ys
+open PW public
+  using ()
+  renaming
+    ( _∷_    to ≈-cons
+    ; []     to ≈-null
+    ; head   to ≈-head
+    ; tail   to ≈-tail
+    ; uncons to ≈-uncons
+    ; lookup to ≈-lookup
+    ; map      to ≈-map
+    )
 
-≈-refl : ∀ {n} {u : Vector n} -> u ≈ u
-≈-refl {u = []} = ≈-null
-≈-refl {u = x ∷ xs} = ≈-cons ≈ᵏ-refl ≈-refl
+_≈ʰ_ : ∀ {m n} (xs : Vec K' m) (ys : Vec K' n) → Set (k ⊔ ℓ)
+_≈ʰ_ = PW.Pointwise _≈ᵏ_
 
-≈-sym : ∀ {n} {u v : Vector n} -> u ≈ v -> v ≈ u
-≈-sym ≈-null        = ≈-null
-≈-sym (≈-cons r rs) = ≈-cons (≈ᵏ-sym r) (≈-sym rs)
-
-≈-trans : ∀ {n} {u v w : Vector n} → u ≈ v → v ≈ w → u ≈ w
-≈-trans ≈-null ≈-null = ≈-null
-≈-trans (≈-cons r₁ rs₁) (≈-cons r₂ rs₂) = ≈-cons (≈ᵏ-trans r₁ r₂) (≈-trans rs₁ rs₂)
+_≈_ : ∀ {n} (xs : Vec K' n) (ys : Vec K' n) → Set (k ⊔ ℓ)
+_≈_ = _≈ʰ_
 
 ≈-isEquiv : ∀ {n} -> IsEquivalence (_≈_ {n})
-≈-isEquiv = record
-  { refl  =  ≈-refl
-  ; sym   =  ≈-sym
-  ; trans =  ≈-trans
-  }
+≈-isEquiv {n} = PW.isEquivalence ≈ᵏ-isEquiv n
 
-0# : ∀ {n} → Vector n
+setoid : ℕ -> Setoid k (k ⊔ ℓ)
+setoid n = record { isEquivalence = ≈-isEquiv {n} }
+
+module _ {n} where
+  open IsEquivalence (≈-isEquiv {n}) public
+    using ()
+    renaming
+      ( refl  to ≈-refl
+      ; sym   to ≈-sym
+      ; trans to ≈-trans
+      ; reflexive to ≈-reflexive
+      )
+
+0# : ∀ {n} → V n
 0# {0}     = []
 0# {suc n} = 0ᵏ ∷ 0# {n}
 
--_ : ∀ {n} → Vector n → Vector n
--_ [] = []
--_ (x ∷ xs) = (-ᵏ x) ∷ (- xs)
-
+-_ : ∀ {n} → V n → V n
+-_ = map (-ᵏ_)
 
 infixr 25 _+_
-_+_ : ∀ {n} → Op₂ (Vector n)
-[] + [] = []
-(x ∷ xs) + (y ∷ ys) = (x +ᵏ y) ∷ (xs + ys)
+_+_ : ∀ {n} → Op₂ (V n)
+_+_ = zipWith _+ᵏ_
 
 infixr 35 _∙_
-_∙_ : ∀ {n} → K' → Vector n → Vector n
-k ∙ [] = []
-k ∙ (x ∷ xs) = (k *ᵏ x) ∷ (k ∙ xs)
+_∙_ : ∀ {n} → K' → V n → V n
+_∙_ k = map (k *ᵏ_)
 
-
+{-
 module HeterogeneousEquivalence where
   import Relation.Binary.Indexed.Heterogeneous as IH
 
-  data _≈ʰ_ : IH.IRel Vector (k ⊔ ℓ) where
-    ≈ʰ-null : ∀ {n p} {u : Vector n} {v : Vector p} -> n ≡ 0 -> p ≡ 0 -> u ≈ʰ v
-    ≈ʰ-cons : ∀ {n p} {x y : K'} {u : Vector n} {v : Vector p} -> n ≡ p -> x ≈ᵏ y -> u ≈ʰ v -> x ∷ u ≈ʰ y ∷ v
+  data _≈ʰ_ : IH.IRel V (k ⊔ ℓ) where
+    ≈ʰ-null : ∀ {n p} {u : V n} {v : V p} -> n ≡ 0 -> p ≡ 0 -> u ≈ʰ v
+    ≈ʰ-cons : ∀ {n p} {x y : K'} {u : V n} {v : V p} -> n ≡ p -> x ≈ᵏ y -> u ≈ʰ v -> (x ∷ u) ≈ʰ (y ∷ v)
 
   pattern ≈ʰ-zero = ≈ʰ-null ≡-refl ≡-refl
 
-  ≈ʰ-refl : IH.Reflexive Vector _≈ʰ_
+  ≈ʰ-refl : IH.Reflexive V _≈ʰ_
   ≈ʰ-refl {0} {[]} = ≈ʰ-zero
   ≈ʰ-refl {suc n} {x ∷ xs} = ≈ʰ-cons (≡-refl) ≈ᵏ-refl (≈ʰ-refl {n} {xs})
 
-  ≈ʰ-sym : IH.Symmetric Vector _≈ʰ_
+  ≈ʰ-sym : IH.Symmetric V _≈ʰ_
   ≈ʰ-sym {0} ≈ʰ-zero = ≈ʰ-zero
   ≈ʰ-sym {suc n} (≈ʰ-cons rn r rs) = ≈ʰ-cons (≡-sym rn) (≈ᵏ-sym r) (≈ʰ-sym rs)
 
-  ≈ʰ-trans : IH.Transitive Vector _≈ʰ_
+  ≈ʰ-trans : IH.Transitive V _≈ʰ_
   ≈ʰ-trans (≈ʰ-null rn rp) (≈ʰ-null rn' rp') = ≈ʰ-null rn rp'
   ≈ʰ-trans (≈ʰ-cons rn r rs) (≈ʰ-cons rn' r' rs') = ≈ʰ-cons (≡-trans rn rn') (≈ᵏ-trans r r') (≈ʰ-trans rs rs')
 
-  ≈ʰ-isEquiv : IH.IsIndexedEquivalence Vector _≈ʰ_
+  ≈ʰ-isEquiv : IH.IsIndexedEquivalence V _≈ʰ_
   ≈ʰ-isEquiv = record
     { refl  = ≈ʰ-refl
     ; sym   = ≈ʰ-sym
     ; trans = ≈ʰ-trans
     }
 
-  ≈-to-≈ʰ : ∀ {n} {u v : Vector n} -> u ≈ v -> u ≈ʰ v
+  ≈-to-≈ʰ : ∀ {n} {u v : V n} -> u ≈ v -> u ≈ʰ v
   ≈-to-≈ʰ {0} ≈-null = ≈ʰ-zero
   ≈-to-≈ʰ {suc n} (≈-cons r rs) = ≈ʰ-cons ≡-refl r (≈-to-≈ʰ rs)
 
-  ≈ʰ-to-≈ : ∀ {n} {u v : Vector n} -> u ≈ʰ v -> u ≈ v
+  ≈ʰ-to-≈ : ∀ {n} {u v : V n} -> u ≈ʰ v -> u ≈ v
   ≈ʰ-to-≈ {0} {[]} {[]} ≈ʰ-zero = ≈-null
   ≈ʰ-to-≈ {suc n} (≈ʰ-cons _ r rs) = ≈-cons r (≈ʰ-to-≈ rs)
 
-  ≈ʰ-tail : ∀ {n p} {x y : K'} {u : Vector n} {v : Vector p} -> x ∷ u ≈ʰ x ∷ v -> u ≈ʰ v
+  ≈ʰ-tail : ∀ {n p} {x y : K'} {u : V n} {v : V p} -> (x ∷ u) ≈ʰ (x ∷ v) -> u ≈ʰ v
   ≈ʰ-tail (≈ʰ-cons _ _ r) = r
 
   indexedSetoid : IH.IndexedSetoid ℕ k (ℓ ⊔ k)
   indexedSetoid = record
-    { Carrier       = Vector
+    { Carrier       = V
     ; _≈_           = _≈ʰ_
     ; isEquivalence = ≈ʰ-isEquiv
     }
-
 setoid : ℕ -> Setoid k (k ⊔ ℓ)
 setoid n = record
-  { Carrier       = Vector n
+  { Carrier       = V n
   ; _≈_           = _≈_
   ; isEquivalence = ≈-isEquiv
   }
+-}
 
-++-identityˡ : ∀ {n} (u : Vector n) -> [] ++ u ≈ u
+++-identityˡ : ∀ {n} (u : V n) -> ([] ++ u) ≈ u
 ++-identityˡ _ = ≈-refl
 
-open HeterogeneousEquivalence
-
-++-identityʳ-≈ʰ : ∀ {n} (u : Vector n) -> u ++ [] ≈ʰ u
-++-identityʳ-≈ʰ [] = ≈ʰ-refl
-++-identityʳ-≈ʰ {suc n} (x ∷ xs) = ≈ʰ-cons (+ℕ-identityʳ n) ≈ᵏ-refl (++-identityʳ-≈ʰ {n} xs)
-
-++-cong : ∀ {n p} {u₁ v₁ : Vector n} {u₂ v₂ : Vector p}
-        -> u₁ ≈ v₁ -> u₂ ≈ v₂ -> u₁ ++ u₂ ≈ v₁ ++ v₂
+++-cong : ∀ {n p} {u₁ v₁ : V n} {u₂ v₂ : V p}
+        -> u₁ ≈ v₁ -> u₂ ≈ v₂ -> (u₁ ++ u₂) ≈ (v₁ ++ v₂)
 ++-cong  ≈-null        r₂ = r₂
 ++-cong (≈-cons r₁ rs₁) r₂ = ≈-cons r₁ (++-cong rs₁ r₂)
 
-++-split : ∀ {n p} {u₁ v₁ : Vector n} {u₂ v₂ : Vector p}
-        ->  u₁ ++ u₂ ≈ v₁ ++ v₂ -> (u₁ ≈ v₁ × u₂ ≈ v₂)
+++-split : ∀ {n p} {u₁ v₁ : V n} {u₂ v₂ : V p}
+        ->  (u₁ ++ u₂) ≈ (v₁ ++ v₂) -> (u₁ ≈ v₁ × u₂ ≈ v₂)
 ++-split {0} {p} {[]} {[]} r = ≈-null , r
 ++-split {suc n} {p} {x ∷ xs} {y ∷ ys} (≈-cons r rs) =
   let (r₁ , r₂) = ++-split {n} {p} rs
   in (≈-cons r r₁) , r₂
 
-++-cong-≈ʰ : ∀ {n p} {u₁ v₁ : Vector n} {u₂ v₂ : Vector p}
-           -> u₁ ≈ʰ v₁ -> u₂ ≈ʰ v₂ -> u₁ ++ u₂ ≈ʰ v₁ ++ v₂
-++-cong-≈ʰ r₁ r₂ = ≈-to-≈ʰ (++-cong (≈ʰ-to-≈ r₁) (≈ʰ-to-≈ r₂))
-
-0++0≈0 : ∀ {n p} -> 0# {n} ++ 0# {p} ≈ 0# {n +ℕ p}
+0++0≈0 : ∀ {n p} -> (0# {n} ++ 0# {p}) ≈ 0# {n +ℕ p}
 0++0≈0 {zero} = ++-identityˡ 0#
 0++0≈0 {suc n} = ≈-cons ≈ᵏ-refl (0++0≈0 {n})
 
-splitAt-identityˡ : ∀ {n} (u : Vector n) -> let (x₁ , x₂) = splitAt 0 z≤n u in (x₁ ≈ʰ []) × (x₂ ≈ʰ u)
+{-
+open HeterogeneousEquivalence
+
+++-identityʳ-≈ʰ : ∀ {n} (u : V n) -> (u ++ []) ≈ʰ u
+++-identityʳ-≈ʰ [] = ≈ʰ-refl
+++-identityʳ-≈ʰ {suc n} (x ∷ xs) = ≈ʰ-cons (+ℕ-identityʳ n) ≈ᵏ-refl (++-identityʳ-≈ʰ {n} xs)
+
+++-cong-≈ʰ : ∀ {n p} {u₁ v₁ : V n} {u₂ v₂ : V p}
+           -> u₁ ≈ʰ v₁ -> u₂ ≈ʰ v₂ -> (u₁ ++ u₂) ≈ʰ (v₁ ++ v₂)
+++-cong-≈ʰ r₁ r₂ = ≈-to-≈ʰ (++-cong (≈ʰ-to-≈ r₁) (≈ʰ-to-≈ r₂))
+
+splitAt-identityˡ : ∀ {n} (u : V n) -> let (x₁ , x₂) = splitAt 0 z≤n u in (x₁ ≈ʰ []) × (x₂ ≈ʰ u)
 splitAt-identityˡ {0}_ = ≈ʰ-zero , ≈ʰ-zero
 splitAt-identityˡ {suc n} _ = ≈ʰ-zero , ≈ʰ-refl
 
-splitAt-identityʳ : ∀ {n} (u : Vector n) -> let (x₁ , x₂) = splitAt n ≤-refl u in (x₁ ≈ʰ u) × (x₂ ≈ʰ [])
+splitAt-identityʳ : ∀ {n} (u : V n) -> let (x₁ , x₂) = splitAt n ≤-refl u in (x₁ ≈ʰ u) × (x₂ ≈ʰ [])
 splitAt-identityʳ {0} [] = ≈ʰ-refl , ≈ʰ-refl
 splitAt-identityʳ {suc n} (x ∷ xs) = ≈ʰ-cons ≡-refl ≈ᵏ-refl (proj₁ (splitAt-identityʳ xs))
                                    , ≈ʰ-null (n∸n≡0 (suc n)) ≡-refl
 
-++-splitAt : ∀ {n} (k : ℕ) (r : k ≤ n) (u : Vector n) -> let (x₁ , x₂) = splitAt k r u in x₁ ++ x₂ ≈ʰ u
+++-splitAt : ∀ {n} (k : ℕ) (r : k ≤ n) (u : V n) -> let (x₁ , x₂, _) = splitAt n u in (x₁ ++ x₂) ≡ u
 ++-splitAt {0} 0 r u = ≈ʰ-null (m+[n∸m]≡n r) ≡-refl
 ++-splitAt {suc n} 0 r (x ∷ xs) = ≈ʰ-refl
 ++-splitAt {suc n} (suc k) sk≤sn (x ∷ xs) =
   let k≤n = ≤-pred sk≤sn
   in ≈ʰ-cons (m+[n∸m]≡n k≤n) ≈ᵏ-refl (++-splitAt k k≤n xs)
 
-splitAt-++ : ∀ {n p} (u : Vector n) (v : Vector p) ->
+splitAt-++ : ∀ {n p} (u : Vec n) (v : Vec p) ->
   let (u' , v') = splitAt n (m≤m+n n p) (u ++ v) in (u ≈ʰ u') × (v ≈ʰ v')
 splitAt-++ {0} {0} [] [] =  ≈ʰ-zero , ≈ʰ-zero
 splitAt-++ {0} {suc p} [] (y ∷ ys) = ≈ʰ-zero , ≈ʰ-refl
@@ -221,12 +217,12 @@ splitAt-++ {suc n} {suc p} (x ∷ xs) (y ∷ ys) =
       (rxs , rv) = splitAt-++ {n} {suc p} xs (y ∷ ys)
   in ≈ʰ-cons ≡-refl ≈ᵏ-refl rxs , rv
 
-++-splitAt' : ∀ {n p} (u : Vector (n +ℕ p)) -> let (x₁ , x₂) = splitAt' n p ≡-refl u in x₁ ++ x₂ ≈ u
+++-splitAt' : ∀ {n p} (u : Vec (n +ℕ p)) -> let (x₁ , x₂) = splitAt' n p ≡-refl u in x₁ ++ x₂ ≈ u
 ++-splitAt' {0} [] = ≈-null
 ++-splitAt' {0} (x ∷ xs) = ≈-refl
 ++-splitAt' {suc n} (x ∷ xs) = ≈-cons ≈ᵏ-refl (++-splitAt' {n} xs)
 
-splitAt'-++ : ∀ {n p} (u : Vector n) (v : Vector p) ->
+splitAt'-++ : ∀ {n p} (u : Vec n) (v : Vec p) ->
   let (u' , v') = splitAt' n p ≡-refl (u ++ v) in (u ≈ u') × (v ≈ v')
 splitAt'-++ {0} {0} [] [] =  ≈-null , ≈-null
 splitAt'-++ {0} {suc p} [] (y ∷ ys) = ≈-null , ≈-refl
@@ -238,6 +234,7 @@ splitAt'-++ {suc n} {suc p} (x ∷ xs) (y ∷ ys) =
       (ru , rys) = splitAt'-++ {suc n} {p} (x ∷ xs) ys
       (rxs , rv) = splitAt'-++ {n} {suc p} xs (y ∷ ys)
   in ≈-cons ≈ᵏ-refl rxs , rv
+-}
 
 +-cong : ∀ {n} → Congruent₂ (_≈_ {n}) _+_
 +-cong ≈-null ≈-null = ≈-null
@@ -262,27 +259,27 @@ splitAt'-++ {suc n} {suc p} (x ∷ xs) (y ∷ ys) =
 +-comm [] [] = ≈-null
 +-comm (x ∷ xs) (y ∷ ys) = ≈-cons (+ᵏ-comm x y) (+-comm xs ys)
 
-*ᵏ-∙-compat : ∀ {n} (a b : K') (u : Vector n) -> ((a *ᵏ b) ∙ u) ≈ (a ∙ (b ∙ u))
+*ᵏ-∙-compat : ∀ {n} (a b : K') (u : V n) -> ((a *ᵏ b) ∙ u) ≈ (a ∙ (b ∙ u))
 *ᵏ-∙-compat a b [] = ≈-null
 *ᵏ-∙-compat a b (x ∷ xs) = ≈-cons (*ᵏ-assoc a b x) (*ᵏ-∙-compat a b xs)
 
-∙-+-distrib : ∀ {n} (a : K') (u v : Vector n) -> (a ∙ (u + v)) ≈ ((a ∙ u) + (a ∙ v))
+∙-+-distrib : ∀ {n} (a : K') (u v : V n) -> (a ∙ (u + v)) ≈ ((a ∙ u) + (a ∙ v))
 ∙-+-distrib a [] [] = ≈-null
 ∙-+-distrib a (x ∷ xs) (y ∷ ys) = ≈-cons (*ᵏ-+ᵏ-distribˡ a x y) (∙-+-distrib a xs ys)
 
-∙-+ᵏ-distrib : ∀ {n} (a b : K') (u : Vector n) -> ((a +ᵏ b) ∙ u) ≈ ((a ∙ u) + (b ∙ u))
+∙-+ᵏ-distrib : ∀ {n} (a b : K') (u : V n) -> ((a +ᵏ b) ∙ u) ≈ ((a ∙ u) + (b ∙ u))
 ∙-+ᵏ-distrib a b [] = ≈-null
 ∙-+ᵏ-distrib a b (x ∷ u) = ≈-cons (*ᵏ-+ᵏ-distribʳ x a b) (∙-+ᵏ-distrib a b u)
 
-∙-cong : ∀ {n} {a b : K'} {u v : Vector n} → a ≈ᵏ b -> u ≈ v -> (a ∙ u) ≈ (b ∙ v)
+∙-cong : ∀ {n} {a b : K'} {u v : V n} → a ≈ᵏ b -> u ≈ v -> (a ∙ u) ≈ (b ∙ v)
 ∙-cong rᵏ ≈-null = ≈-null
 ∙-cong rᵏ (≈-cons r rs) = ≈-cons (*ᵏ-cong rᵏ r) (∙-cong rᵏ rs)
 
-∙-identity : ∀ {n} (x : Vector n) → (1ᵏ ∙ x) ≈ x
+∙-identity : ∀ {n} (x : V n) → (1ᵏ ∙ x) ≈ x
 ∙-identity [] = ≈-null
 ∙-identity (x ∷ xs) = ≈-cons (*ᵏ-identityˡ x) (∙-identity xs)
 
-∙-absorbˡ : ∀ {n} (x : Vector n) → (0ᵏ ∙ x) ≈ 0#
+∙-absorbˡ : ∀ {n} (x : V n) → (0ᵏ ∙ x) ≈ 0#
 ∙-absorbˡ [] = ≈-null
 ∙-absorbˡ (x ∷ xs) = ≈-cons (*ᵏ-zeroˡ x) (∙-absorbˡ xs)
 
@@ -302,16 +299,16 @@ splitAt'-++ {suc n} {suc p} (x ∷ xs) (y ∷ ys) =
 -‿cong (≈-cons r rs) = ≈-cons (-ᵏ‿cong r) (-‿cong rs)
 
 +-distrib-++ : ∀ {n p}
-                 (u₁ : Vector n) (u₂ : Vector p)
-                 (v₁ : Vector n) (v₂ : Vector p)
-             -> (u₁ ++ u₂) + (v₁ ++ v₂) ≈ (u₁ + v₁) ++ (u₂ + v₂)
+                 (u₁ : V n) (u₂ : V p)
+                 (v₁ : V n) (v₂ : V p)
+             -> ((u₁ ++ u₂) + (v₁ ++ v₂)) ≈ ((u₁ + v₁) ++ (u₂ + v₂))
 +-distrib-++ [] [] [] [] = ≈-null
 +-distrib-++ (x₁ ∷ xs₁) [] (y₁ ∷ ys₁) [] = ++-cong ≈-refl (+-distrib-++ xs₁ [] ys₁ [])
 +-distrib-++ {0} {suc p} [] (x₂ ∷ xs₂) [] (y₂ ∷ ys₂) = ++-identityˡ ((x₂ +ᵏ y₂) ∷ (xs₂ + ys₂))
 +-distrib-++ (x₁ ∷ xs₁) u₂ (y₁ ∷ ys₁) v₂ =
   ≈-cons ≈ᵏ-refl (++-cong ≈-refl (+-distrib-++ xs₁ u₂ ys₁ v₂))
 
-∙-distrib-++ : ∀ {n p} (a : K') (u : Vector n) (v : Vector p) -> a ∙ (u ++ v) ≈ a ∙ u ++ a ∙ v
+∙-distrib-++ : ∀ {n p} (a : K') (u : V n) (v : V p) -> (a ∙ (u ++ v)) ≈ ((a ∙ u) ++ (a ∙ v))
 ∙-distrib-++ a [] v = ≈-refl
 ∙-distrib-++ a (x ∷ xs) v = ≈-cons ≈ᵏ-refl (∙-distrib-++ a xs v)
 

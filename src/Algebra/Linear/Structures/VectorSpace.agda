@@ -21,6 +21,7 @@ module VectorSpaceField where
       ; sym           to ≈ᵏ-sym
       ; trans         to ≈ᵏ-trans
       ; reflexive     to ≈ᵏ-reflexive
+      ; isEquivalence to ≈ᵏ-isEquiv
       ; setoid        to K-setoid
       ; _+_           to _+ᵏ_
       ; _*_           to _*ᵏ_
