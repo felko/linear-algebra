@@ -3,7 +3,7 @@
 open import Algebra.Structures.Bundles.Field
 open import Algebra.Linear.Structures.Bundles
 
-module Algebra.Linear.Construct.ProductSpace
+module Algebra.Linear.Space.Product
   {k ℓ} (K : Field k ℓ)
   {a₁ ℓ₁} (V₁-space : VectorSpace K a₁ ℓ₁)
   {a₂ ℓ₂} (V₂-space : VectorSpace K a₂ ℓ₂)

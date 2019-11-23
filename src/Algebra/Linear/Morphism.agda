@@ -7,6 +7,5 @@ module Algebra.Linear.Morphism
   where
 
 open import Algebra.Linear.Morphism.Definitions K public
-open import Algebra.Linear.Morphism.Structures  K public
 open import Algebra.Linear.Morphism.Bundles     K public
 open import Algebra.Linear.Morphism.VectorSpace K public

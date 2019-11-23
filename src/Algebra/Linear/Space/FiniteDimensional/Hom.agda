@@ -3,10 +3,10 @@
 open import Algebra.Structures.Bundles.Field
 import Algebra.Linear.Structures.Bundles.FiniteDimensional as FDB
 
-module Algebra.Linear.Construct.ProductSpace.FiniteDimensional
+module Algebra.Linear.Space.FiniteDimensional.Hom
        {k ℓᵏ} (K : Field k ℓᵏ)
-       {n a₁ ℓ₁} (V₁-space : FDB.FiniteDimensional K a₁ ℓ₁ n)
-       {p a₂ ℓ₂} (V₂-space : FDB.FiniteDimensional K a₂ ℓ₂ p)
+       {p a₁ ℓ₁} (V₁-space : FDB.FiniteDimensional K a₁ ℓ₁ p)
+       {n a₂ ℓ₂} (V₂-space : FDB.FiniteDimensional K a₂ ℓ₂ n)
        where
 
 open import Algebra.Linear.Structures.VectorSpace K
@@ -26,7 +26,6 @@ open FDB.FiniteDimensional V₁-space
   ; refl          to ≈₁-refl
   ; sym           to ≈₁-sym
   ; trans         to ≈₁-trans
-  ; reflexive     to ≈₁-reflexive
   ; _+_           to _+₁_
   ; _∙_           to _∙₁_
   ; -_            to -₁_
@@ -60,7 +59,6 @@ open FDB.FiniteDimensional V₂-space
   ; refl          to ≈₂-refl
   ; sym           to ≈₂-sym
   ; trans         to ≈₂-trans
-  ; reflexive     to ≈₂-reflexive
   ; _+_           to _+₂_
   ; _∙_           to _∙₂_
   ; -_            to -₂_
@@ -109,8 +107,8 @@ open LinearIsomorphism embed₂
   ; 0#-homo    to 0₂-homo
   )
 
-open import Data.Product
-import Algebra.Linear.Construct.ProductSpace K vectorSpace₁ vectorSpace₂ as PS
+import Algebra.Linear.Construct.HomSpace K vectorSpace₁ vectorSpace₂ as PS
+
 open VS.VectorSpace PS.vectorSpace
   renaming
     ( refl  to ≈-refl
@@ -118,11 +116,11 @@ open VS.VectorSpace PS.vectorSpace
     ; trans to ≈-trans
     )
 
-open import Algebra.Linear.Construct.Vector K
+import Algebra.Linear.Construct.Vector as Vec
+open Vec K
   using
     ( ++-cong
     ; ++-identityˡ
-    ; ++-split
     ; +-distrib-++
     ; ∙-distrib-++
     ; 0++0≈0
@@ -132,7 +130,6 @@ open import Algebra.Linear.Construct.Vector K
     ; ≈-refl      to ≈v-refl
     ; ≈-sym       to ≈v-sym
     ; ≈-trans     to ≈v-trans
-    ; ≈-reflexive to ≈v-reflexive
     ; _+_         to _+v_
     ; _∙_         to _∙v_
     ; 0#          to 0v
@@ -141,7 +138,9 @@ open import Algebra.Linear.Construct.Vector K
     ; vectorSpace to vector-vectorSpace
     )
 
-open import Data.Nat using (ℕ) renaming (_+_ to _+ℕ_)
+import Algebra.Linear.Construct.Matrix K as M
+
+open import Data.Nat hiding (_+_) renaming (_*_ to _*ℕ_)
 
 open import Relation.Binary.PropositionalEquality as P
   using (_≡_; subst; subst-subst-sym)
@@ -152,16 +151,44 @@ open import Relation.Binary.PropositionalEquality as P
   )
 
 open import Data.Vec
-open import Algebra.Morphism.Definitions (V₁ × V₂) (Vec K' (n +ℕ p)) _≈v_
-open import Algebra.Linear.Morphism.Definitions K (V₁ × V₂) (Vec K' (n +ℕ p)) _≈v_
-import Relation.Binary.Morphism.Definitions (V₁ × V₂) (Vec K' (n +ℕ p)) as R
+open import Data.Product
+open import Data.Fin
 open import Function
-open import Relation.Binary.EqReasoning (vec-setoid (n +ℕ p))
 
-⟦_⟧ : V₁ × V₂ -> Vec K' (n +ℕ p)
-⟦ (u , v) ⟧ = ⟦ u ⟧₁ ++ ⟦ v ⟧₂
+δ : ∀ {n p} -> Fin n -> Fin p -> K'
+δ zero zero = 1ᵏ
+δ (suc n) zero = 0ᵏ
+δ zero (suc p) = 0ᵏ
+δ (suc n) (suc p) = δ n p
 
-⟦⟧-cong : R.Homomorphic₂ PS._≈_ _≈v_ ⟦_⟧
+canonicalBasis : M.Matrix n p
+canonicalBasis = M.tabulate δ
+
+module _ where
+  open import Algebra.Morphism.Definitions (LinearMap vectorSpace₁ vectorSpace₂) (M.Matrix n p) M._≈_
+  open import Algebra.Linear.Morphism.Definitions K (LinearMap vectorSpace₁ vectorSpace₂) (M.Matrix n p) M._≈_
+  import Relation.Binary.Morphism.Definitions (LinearMap vectorSpace₁ vectorSpace₂) (M.Matrix n p) as R
+  open import Relation.Binary.EqReasoning (M.setoid {n} {p})
+
+  Mat : LinearMap vectorSpace₁ vectorSpace₂ -> M.Matrix n p
+  Mat f = M.mapCols (λ u -> embed₂ LinearIsomorphism.⟪$⟫ (f LinearMap.⟪$⟫ {! embed₁ ⁻¹ ⟪$⟫ u!}))
+                    canonicalBasis
+
+-- (λ u → embed₂ LinearIsomorphism.⟪$⟫ (proj₁ (⟦⟧₂-surjective u))) canonicalBasis
+
+  Mat-cong : R.Homomorphic₂ _≈_ M._≈_ Mat
+  Mat-cong {A} {B} f =
+    begin
+      Mat A
+    ≈⟨ M.≈-reflexive (M.mapCols-cong (λ u → {!!}) canonicalBasis) ⟩
+      {!!}
+    ≈⟨ {!!} ⟩
+      Mat B
+    ∎
+
+{-
+
+Mat-cong : R.Homomorphic₂ PS._≈_ _≈v_ Mat
 ⟦⟧-cong (r₁ , r₂) = ++-cong (⟦⟧₁-cong r₁) (⟦⟧₂-cong r₂)
 
 +-homo : Homomorphic₂ ⟦_⟧ _+_ _+v_
@@ -200,17 +227,17 @@ open import Relation.Binary.EqReasoning (vec-setoid (n +ℕ p))
     c ∙v ⟦ x₁ , x₂ ⟧
   ∎
 
-⟦⟧-injective : Injective PS._≈_ (_≈v_ {n +ℕ p}) ⟦_⟧
+⟦⟧-injective : Injective ⟦_⟧
 ⟦⟧-injective {x₁ , x₂} {y₁ , y₂} r =
   let (r₁ , r₂) = ++-split r
   in ⟦⟧₁-injective r₁ , ⟦⟧₂-injective r₂
 
-⟦⟧-surjective : Surjective PS._≈_ (_≈v_ {n +ℕ p}) ⟦_⟧
+⟦⟧-surjective : Surjective ⟦_⟧
 ⟦⟧-surjective y =
-  let (x₁ , x₂ , r) = splitAt n y
+  let (x₁ , x₂) = splitAt' n p ≡-refl y
       (u , r₁) = ⟦⟧₁-surjective x₁
       (v , r₂) = ⟦⟧₂-surjective x₂
-  in  (u , v) , ≈v-trans (++-cong r₁ r₂) (≈v-sym (≈v-reflexive r))
+  in  (u , v) , ≈v-trans (++-cong r₁ r₂) (++-splitAt' {n} {p} y)
 
 embed : LinearIsomorphism PS.vectorSpace (vector-vectorSpace {n +ℕ p})
 embed = record
@@ -242,3 +269,4 @@ isFiniteDimensional = record
   { isVectorSpace = isVectorSpace
   ; embed         = embed
   }
+-}
