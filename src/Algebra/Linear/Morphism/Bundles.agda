@@ -70,7 +70,7 @@ module _
       ⟦_⟧         : Morphism
       isLinearMap : IsLinearMap From To ⟦_⟧
 
-    infixl 25 _⟪$⟫_
+    infixr 25 _⟪$⟫_
     _⟪$⟫_ : A -> B
     _⟪$⟫_ = ⟦_⟧
 
