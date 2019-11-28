@@ -8,9 +8,9 @@ module Algebra.Linear.Construct.Matrix
 
 open import Level using (_⊔_)
 open import Data.Product hiding (map)
-open import Data.Fin using (Fin; toℕ; fromℕ)
+open import Data.Fin using (Fin; toℕ; fromℕ; _≤_)
 open import Data.Fin.Properties using (¬Fin0)
-open import Data.Nat hiding (_⊔_) renaming (_+_ to _+ℕ_; _*_ to _*ℕ_)
+open import Data.Nat hiding (_⊔_; _≤_) renaming (_+_ to _+ℕ_; _*_ to _*ℕ_)
 open import Data.Nat.Properties using (1+n≢0)
 
 open import Relation.Binary
@@ -301,7 +301,7 @@ concat-+ {suc n} {p} (u V.∷ us) (v V.∷ vs) =
     (u V.+ v) V.++ V.concat (V.zipWith V._+_ us vs)
   ≈⟨ V.++-cong V.≈-refl (concat-+ {n} {p} us vs) ⟩
     (u V.+ v) V.++ (V.concat us V.+ V.concat vs)
-  ≈⟨ V.≈-sym (V.+-distrib-++ u (V.concat us) v (V.concat vs)) ⟩
+  ≈⟨ V.≈-sym (V.+-++-distrib u (V.concat us) v (V.concat vs)) ⟩
     (V.concat (u V.∷ us)) V.+ (V.concat (v V.∷ vs))
   ∎
   where open import Relation.Binary.EqReasoning (V.setoid (p +ℕ n *ℕ p))
@@ -329,34 +329,13 @@ concat-∙ {suc n} {p} c (u V.∷ us) =
     (c V.∙ u) V.++ (V.concat (c ∙ us))
   ≈⟨ V.++-cong V.≈-refl (concat-∙ {n} {p} c us) ⟩
     (c V.∙ u) V.++ (c V.∙ V.concat us)
-  ≈⟨ V.≈-sym (V.∙-distrib-++ c u (V.concat us)) ⟩
+  ≈⟨ V.≈-sym (V.∙-++-distrib c u (V.concat us)) ⟩
     c V.∙ V.concat (u V.∷ us)
   ∎
   where open import Relation.Binary.EqReasoning (V.setoid (p +ℕ n *ℕ p))
 
-private
-  vsum : ∀ {n} -> V.Vec K' n -> K'
-  vsum = V.foldr _ _+ᵏ_ 0ᵏ
-
-  vsum-tab : ∀ {n} -> (Fin n -> K') -> K'
-  vsum-tab f = vsum (V.tabulate f)
-
-  vsum-cong : ∀ {n} {u v : V.Vec K' n} -> u V.≈ v -> vsum u ≈ᵏ vsum v
-  vsum-cong {0} PW.[] = ≈ᵏ-refl
-  vsum-cong {suc n} (r PW.∷ rs) = +ᵏ-cong r (vsum-cong {n} rs)
-
-  vtab-cong-≈ : ∀ {n} {f g : Fin n -> K'} -> (∀ i -> f i ≈ᵏ g i) -> V.tabulate f V.≈ V.tabulate g
-  vtab-cong-≈ {0} r = PW.[]
-  vtab-cong-≈ {suc n} r = r Fin.zero PW.∷ vtab-cong-≈ (λ i → r (Fin.suc i))
-
-  vsum-tab-cong : ∀ {n} {f g : Fin n -> K'} -> (∀ i -> f i ≈ᵏ g i) -> vsum-tab f ≈ᵏ vsum-tab g
-  vsum-tab-cong r = vsum-cong (vtab-cong-≈ r)
-
-trace : ∀ {n} -> M n n -> K'
-trace A = vsum (V.tabulate λ i → A ⟪ i , i ⟫)
-
 _*_ : ∀ {n p q} -> M n p -> M p q -> M n q
-A * B = tabulate λ i j -> vsum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ (B ⟪ k , j ⟫)
+A * B = tabulate λ i j -> V.sum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ (B ⟪ k , j ⟫)
 
 *-cong : ∀ {n p q} {A B : M n p} {C D : M p q}
        -> A ≈ B -> C ≈ D -> (A * C) ≈ (B * D)
@@ -364,103 +343,38 @@ A * B = tabulate λ i j -> vsum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ (B ⟪ k , j 
   begin
     A * C
   ≡⟨⟩
-    tabulate (λ i j -> vsum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ (C ⟪ k , j ⟫))
-  ≈⟨ tabulate⁺ (λ i j -> vsum-tab-cong λ k → *ᵏ-cong (lookup-cong i k r₁) (lookup-cong k j r₂)) ⟩
+    tabulate (λ i j -> V.sum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ (C ⟪ k , j ⟫))
+  ≈⟨ tabulate⁺ (λ i j -> V.sum-tab-cong λ k → *ᵏ-cong (lookup-cong i k r₁) (lookup-cong k j r₂)) ⟩
     B * D
   ∎
   where open import Relation.Binary.EqReasoning (setoid {n} {q})
-
-private
-  lemma₁ : ∀ {n} (a : K') (f : Fin n -> K')
-         → (vsum-tab f *ᵏ a) ≈ᵏ vsum-tab (λ k -> f k *ᵏ a)
-  lemma₁ {0} a f = *ᵏ-zeroˡ a
-  lemma₁ {suc n} a f =
-    begin
-      vsum-tab f *ᵏ a
-    ≈⟨ *ᵏ-+ᵏ-distribʳ a (f Fin.zero) (vsum-tab (λ k -> f (Fin.suc k))) ⟩
-      (f Fin.zero *ᵏ a) +ᵏ (vsum-tab (λ k -> f (Fin.suc k)) *ᵏ a)
-    ≈⟨ +ᵏ-cong ≈ᵏ-refl  (lemma₁ a (λ k -> f (Fin.suc k))) ⟩
-      vsum-tab (λ k -> f k *ᵏ a)
-    ∎
-    where open import Relation.Binary.EqReasoning (Field.setoid K)
-
-  lemma₂ : ∀ {n} (f g : Fin n -> K')
-         -> (vsum-tab f +ᵏ vsum-tab g) ≈ᵏ vsum-tab (λ k -> f k +ᵏ g k)
-  lemma₂ {0} f g = +ᵏ-identityˡ 0ᵏ
-  lemma₂ {suc n} f g =
-    begin
-      vsum-tab f +ᵏ vsum-tab g
-    ≡⟨⟩
-      (f Fin.zero +ᵏ vsum-tab {n} (λ k -> f (Fin.suc k))) +ᵏ (g Fin.zero +ᵏ vsum-tab {n} (λ k -> g (Fin.suc k)))
-    ≈⟨ +ᵏ-assoc (f Fin.zero) (vsum-tab {n} (λ k -> f (Fin.suc k))) (g Fin.zero +ᵏ vsum-tab {n} (λ k -> g (Fin.suc k))) ⟩
-      f Fin.zero +ᵏ (vsum-tab (λ k → f (Fin.suc k)) +ᵏ (g Fin.zero +ᵏ vsum-tab (λ k → g (Fin.suc k))))
-    ≈⟨ +ᵏ-cong ≈ᵏ-refl (+ᵏ-comm (vsum-tab (λ k -> f (Fin.suc k))) ((g Fin.zero +ᵏ vsum-tab (λ k → g (Fin.suc k))))) ⟩
-      f Fin.zero +ᵏ ((g Fin.zero +ᵏ vsum-tab (λ k → g (Fin.suc k))) +ᵏ vsum-tab (λ k → f (Fin.suc k)))
-    ≈⟨ +ᵏ-cong ≈ᵏ-refl (+ᵏ-assoc (g Fin.zero) (vsum-tab (λ k -> g (Fin.suc k))) (vsum-tab (λ k -> f (Fin.suc k)))) ⟩
-      f Fin.zero +ᵏ (g Fin.zero +ᵏ (vsum-tab (λ k → g (Fin.suc k)) +ᵏ vsum-tab (λ k → f (Fin.suc k))))
-    ≈⟨ ≈ᵏ-sym (+ᵏ-assoc (f Fin.zero) (g Fin.zero) (vsum-tab (λ k → g (Fin.suc k)) +ᵏ vsum-tab (λ k → f (Fin.suc k)))) ⟩
-      (f Fin.zero +ᵏ g Fin.zero) +ᵏ (vsum-tab (λ k → g (Fin.suc k)) +ᵏ vsum-tab (λ k → f (Fin.suc k)))
-    ≈⟨ +ᵏ-cong ≈ᵏ-refl (+ᵏ-comm (vsum-tab λ k -> g (Fin.suc k)) (vsum-tab λ k -> f (Fin.suc k))) ⟩
-      (f Fin.zero +ᵏ g Fin.zero) +ᵏ (vsum-tab (λ k → f (Fin.suc k)) +ᵏ vsum-tab (λ k → g (Fin.suc k)))
-    ≈⟨ +ᵏ-cong ≈ᵏ-refl (lemma₂ {n} (λ k -> f (Fin.suc k)) (λ k -> g (Fin.suc k))) ⟩
-      vsum-tab (λ k -> f k +ᵏ g k)
-    ∎
-    where open import Relation.Binary.EqReasoning (Field.setoid K)
-
-  lemma₃ : ∀ {n} -> vsum-tab {n} (λ k -> 0ᵏ) ≈ᵏ 0ᵏ
-  lemma₃ {0} = ≈ᵏ-refl
-  lemma₃ {suc n} = ≈ᵏ-trans (+ᵏ-identityˡ (vsum-tab {n} λ k -> 0ᵏ)) (lemma₃ {n})
-
-  lemma₄ : ∀ {n p} (f : Fin n -> Fin p -> K') (g : Fin n -> K')
-         -> vsum-tab (λ k′ -> vsum-tab λ k -> f k k′ *ᵏ g k)
-         ≈ᵏ vsum-tab (λ k -> vsum-tab λ k′ -> f k k′ *ᵏ g k)
-  lemma₄ {n} {0} f g = ≈ᵏ-sym (lemma₃ {n})
-  lemma₄ {n} {suc p} f g =
-    begin
-       vsum-tab (λ k′ -> vsum-tab λ k -> f k k′ *ᵏ g k)
-    ≡⟨⟩
-      (vsum-tab λ k -> f k Data.Fin.zero *ᵏ g k) +ᵏ (vsum-tab λ k′ -> vsum-tab λ k -> f k (Data.Fin.suc k′) *ᵏ g k)
-    ≈⟨ +ᵏ-cong ≈ᵏ-refl (lemma₄ {n} {p} (λ k k′ -> f k (Fin.suc k′)) g) ⟩
-      vsum-tab (λ k → f k Fin.zero *ᵏ g k) +ᵏ vsum-tab (λ k → vsum-tab (λ k′ → f k (Fin.suc k′) *ᵏ g k))
-    ≈⟨ +ᵏ-cong ≈ᵏ-refl (vsum-tab-cong λ k -> ≈ᵏ-sym (lemma₁ {p} (g k) λ k′ -> f k (Fin.suc k′))) ⟩
-      vsum-tab (λ k → f k Fin.zero *ᵏ g k) +ᵏ vsum-tab (λ k → vsum-tab (λ k′ → f k (Fin.suc k′)) *ᵏ g k)
-    ≈⟨ lemma₂ (λ k -> f k Fin.zero *ᵏ g k) (λ k -> vsum-tab (λ k′ -> f k (Fin.suc k′)) *ᵏ g k) ⟩
-      vsum-tab (λ k -> (f k Fin.zero *ᵏ g k) +ᵏ (vsum-tab (λ k′ -> f k (Fin.suc k′)) *ᵏ g k))
-    ≈⟨ vsum-tab-cong (λ k -> ≈ᵏ-sym (*ᵏ-+ᵏ-distribʳ (g k) (f k Fin.zero) (vsum-tab λ k′ -> f k (Fin.suc k′)))) ⟩
-      vsum-tab (λ k -> vsum-tab (λ k′ -> f k k′) *ᵏ g k)
-    ≈⟨ vsum-tab-cong (λ k -> lemma₁ {suc p} (g k) (λ k′ -> f k k′)) ⟩
-      vsum-tab (λ k -> vsum-tab λ k′ -> f k k′ *ᵏ g k)
-    ∎
-    where open import Relation.Binary.EqReasoning (Field.setoid K)
 
 *-assoc : ∀ {n p q r} (A : M n p) (B : M p q) (C : M q r)
         -> ((A * B) * C) ≈ (A * (B * C))
 *-assoc {n} {r = r} A B C = tabulate⁺ λ i j ->
   begin
-    vsum-tab (λ k′ -> ((A * B) ⟪ i , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫))
-  ≈⟨ vsum-tab-cong (λ k′ -> *ᵏ-cong (≈ᵏ-reflexive (lookup∘tabulate
-                   (λ i′ j′ -> vsum-tab λ k -> (A ⟪ i′ , k ⟫) *ᵏ (B ⟪ k , j′ ⟫)) i k′)) ≈ᵏ-refl) ⟩
-    vsum-tab (λ k′ -> (vsum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ (B ⟪ k , k′ ⟫)) *ᵏ (C ⟪ k′ , j ⟫))
-  ≈⟨ vsum-tab-cong (λ k′ -> lemma₁ (C ⟪ k′ , j ⟫) λ k -> (A ⟪ i , k ⟫) *ᵏ (B ⟪ k , k′ ⟫)) ⟩
-    vsum-tab (λ k′ -> vsum-tab λ k -> ((A ⟪ i , k ⟫) *ᵏ (B ⟪ k , k′ ⟫)) *ᵏ (C ⟪ k′ , j ⟫))
-  ≈⟨ vsum-tab-cong (λ k′ -> vsum-tab-cong λ k -> *ᵏ-assoc (A ⟪ i , k ⟫) (B ⟪ k , k′ ⟫) (C ⟪ k′ , j ⟫)) ⟩
-    vsum-tab (λ k′ -> vsum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ ((B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫)))
-  ≈⟨ vsum-tab-cong (λ k′ -> vsum-tab-cong λ k -> *ᵏ-comm (A ⟪ i , k ⟫) ((B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫))) ⟩
-    vsum-tab (λ k′ -> vsum-tab λ k -> ((B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫)) *ᵏ (A ⟪ i , k ⟫))
-  ≈⟨ lemma₄ (λ k k′ -> (B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫)) (λ k -> A ⟪ i , k ⟫) ⟩
-    vsum-tab (λ k -> vsum-tab λ k′ -> ((B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫)) *ᵏ (A ⟪ i , k ⟫))
-  ≈⟨ vsum-tab-cong (λ k -> ≈ᵏ-trans (≈ᵏ-sym (lemma₁ (A ⟪ i , k ⟫) λ k′ -> (B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫)))
-                                    (*ᵏ-comm (vsum-tab λ k′ -> (B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫)) (A ⟪ i , k ⟫))) ⟩
-    vsum-tab (λ k -> (A ⟪ i , k ⟫) *ᵏ vsum-tab (λ k′ -> (B ⟪ k , k′ ⟫) *ᵏ  (C ⟪ k′ , j ⟫)))
-  ≈⟨ vsum-tab-cong (λ k -> *ᵏ-cong ≈ᵏ-refl
+    V.sum-tab (λ k′ -> ((A * B) ⟪ i , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫))
+  ≈⟨ V.sum-tab-cong (λ k′ -> *ᵏ-cong (≈ᵏ-reflexive (lookup∘tabulate
+                   (λ i′ j′ -> V.sum-tab λ k -> (A ⟪ i′ , k ⟫) *ᵏ (B ⟪ k , j′ ⟫)) i k′)) ≈ᵏ-refl) ⟩
+    V.sum-tab (λ k′ -> (V.sum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ (B ⟪ k , k′ ⟫)) *ᵏ (C ⟪ k′ , j ⟫))
+  ≈⟨ V.sum-tab-cong (λ k′ -> V.*ᵏ-sum-tab-distribʳ (C ⟪ k′ , j ⟫) λ k -> (A ⟪ i , k ⟫) *ᵏ (B ⟪ k , k′ ⟫)) ⟩
+    V.sum-tab (λ k′ -> V.sum-tab λ k -> ((A ⟪ i , k ⟫) *ᵏ (B ⟪ k , k′ ⟫)) *ᵏ (C ⟪ k′ , j ⟫))
+  ≈⟨ V.sum-tab-cong (λ k′ -> V.sum-tab-cong λ k -> *ᵏ-assoc (A ⟪ i , k ⟫) (B ⟪ k , k′ ⟫) (C ⟪ k′ , j ⟫)) ⟩
+    V.sum-tab (λ k′ -> V.sum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ ((B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫)))
+  ≈⟨ V.sum-tab-cong (λ k′ -> V.sum-tab-cong λ k -> *ᵏ-comm (A ⟪ i , k ⟫) ((B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫))) ⟩
+    V.sum-tab (λ k′ -> V.sum-tab λ k -> ((B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫)) *ᵏ (A ⟪ i , k ⟫))
+  ≈⟨ V.sum-tab-swap (λ k k′ -> (B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫)) (λ k -> A ⟪ i , k ⟫) ⟩
+    V.sum-tab (λ k -> V.sum-tab λ k′ -> ((B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫)) *ᵏ (A ⟪ i , k ⟫))
+  ≈⟨ V.sum-tab-cong (λ k -> ≈ᵏ-trans
+                       (≈ᵏ-sym (V.*ᵏ-sum-tab-distribʳ (A ⟪ i , k ⟫) λ k′ -> (B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫)))
+                       (*ᵏ-comm (V.sum-tab λ k′ -> (B ⟪ k , k′ ⟫) *ᵏ (C ⟪ k′ , j ⟫)) (A ⟪ i , k ⟫))) ⟩
+    V.sum-tab (λ k -> (A ⟪ i , k ⟫) *ᵏ V.sum-tab (λ k′ -> (B ⟪ k , k′ ⟫) *ᵏ  (C ⟪ k′ , j ⟫)))
+  ≈⟨ V.sum-tab-cong (λ k -> *ᵏ-cong ≈ᵏ-refl
                    (≈ᵏ-sym (≈ᵏ-reflexive (lookup∘tabulate
-                     (λ i′ j′ -> vsum-tab λ k′ -> (B ⟪ i′ , k′ ⟫) *ᵏ (C ⟪ k′ , j′ ⟫)) k j)))) ⟩
-    vsum-tab (λ k -> (A ⟪ i , k ⟫) *ᵏ ((B * C) ⟪ k , j ⟫))
+                     (λ i′ j′ -> V.sum-tab λ k′ -> (B ⟪ i′ , k′ ⟫) *ᵏ (C ⟪ k′ , j′ ⟫)) k j)))) ⟩
+    V.sum-tab (λ k -> (A ⟪ i , k ⟫) *ᵏ ((B * C) ⟪ k , j ⟫))
   ∎
   where open import Relation.Binary.EqReasoning (Field.setoid K)
-
-det : ∀ {n} -> M n n -> K'
-det A = {!!}
 
 module _ {n p} where
   open IsEquivalence (≈-isEquiv {n} {p}) public

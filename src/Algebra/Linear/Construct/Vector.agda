@@ -8,9 +8,10 @@ module Algebra.Linear.Construct.Vector
 
 open import Level using (_⊔_)
 open import Data.Product using (_×_; _,_)
-open import Data.Vec public
+open import Data.Vec public hiding (sum)
 import Data.Vec.Relation.Binary.Pointwise.Inductive as PW
 open import Data.Nat hiding (_⊔_) renaming (_+_ to _+ℕ_)
+open import Data.Fin using (Fin)
 
 open import Relation.Binary
 open import Algebra.Linear.Core
@@ -298,19 +299,98 @@ splitAt'-++ {suc n} {suc p} (x ∷ xs) (y ∷ ys) =
 -‿cong ≈-null = ≈-null
 -‿cong (≈-cons r rs) = ≈-cons (-ᵏ‿cong r) (-‿cong rs)
 
-+-distrib-++ : ∀ {n p}
++-++-distrib : ∀ {n p}
                  (u₁ : V n) (u₂ : V p)
                  (v₁ : V n) (v₂ : V p)
              -> ((u₁ ++ u₂) + (v₁ ++ v₂)) ≈ ((u₁ + v₁) ++ (u₂ + v₂))
-+-distrib-++ [] [] [] [] = ≈-null
-+-distrib-++ (x₁ ∷ xs₁) [] (y₁ ∷ ys₁) [] = ++-cong ≈-refl (+-distrib-++ xs₁ [] ys₁ [])
-+-distrib-++ {0} {suc p} [] (x₂ ∷ xs₂) [] (y₂ ∷ ys₂) = ++-identityˡ ((x₂ +ᵏ y₂) ∷ (xs₂ + ys₂))
-+-distrib-++ (x₁ ∷ xs₁) u₂ (y₁ ∷ ys₁) v₂ =
-  ≈-cons ≈ᵏ-refl (++-cong ≈-refl (+-distrib-++ xs₁ u₂ ys₁ v₂))
++-++-distrib [] [] [] [] = ≈-null
++-++-distrib (x₁ ∷ xs₁) [] (y₁ ∷ ys₁) [] = ++-cong ≈-refl (+-++-distrib xs₁ [] ys₁ [])
++-++-distrib {0} {suc p} [] (x₂ ∷ xs₂) [] (y₂ ∷ ys₂) = ++-identityˡ ((x₂ +ᵏ y₂) ∷ (xs₂ + ys₂))
++-++-distrib (x₁ ∷ xs₁) u₂ (y₁ ∷ ys₁) v₂ =
+  ≈-cons ≈ᵏ-refl (++-cong ≈-refl (+-++-distrib xs₁ u₂ ys₁ v₂))
 
-∙-distrib-++ : ∀ {n p} (a : K') (u : V n) (v : V p) -> (a ∙ (u ++ v)) ≈ ((a ∙ u) ++ (a ∙ v))
-∙-distrib-++ a [] v = ≈-refl
-∙-distrib-++ a (x ∷ xs) v = ≈-cons ≈ᵏ-refl (∙-distrib-++ a xs v)
+∙-++-distrib : ∀ {n p} (a : K') (u : V n) (v : V p) -> (a ∙ (u ++ v)) ≈ ((a ∙ u) ++ (a ∙ v))
+∙-++-distrib a [] v = ≈-refl
+∙-++-distrib a (x ∷ xs) v = ≈-cons ≈ᵏ-refl (∙-++-distrib a xs v)
+
+sum : ∀ {n} -> V n -> K'
+sum = foldr _ _+ᵏ_ 0ᵏ
+
+sum-tab : ∀ {n} -> (Fin n -> K') -> K'
+sum-tab f = sum (tabulate f)
+
+sum-cong : ∀ {n} {u v : V n} -> u ≈ v -> sum u ≈ᵏ sum v
+sum-cong {0} PW.[] = ≈ᵏ-refl
+sum-cong {suc n} (r PW.∷ rs) = +ᵏ-cong r (sum-cong {n} rs)
+
+tab-cong-≈ : ∀ {n} {f g : Fin n -> K'} -> (∀ i -> f i ≈ᵏ g i) -> tabulate f ≈ tabulate g
+tab-cong-≈ {0} r = PW.[]
+tab-cong-≈ {suc n} r = r Fin.zero PW.∷ tab-cong-≈ (λ i → r (Fin.suc i))
+
+sum-tab-cong : ∀ {n} {f g : Fin n -> K'} -> (∀ i -> f i ≈ᵏ g i) -> sum-tab f ≈ᵏ sum-tab g
+sum-tab-cong r = sum-cong (tab-cong-≈ r)
+
+*ᵏ-sum-tab-distribʳ : ∀ {n} (a : K') (f : Fin n -> K')
+                    → (sum-tab f *ᵏ a) ≈ᵏ sum-tab (λ k -> f k *ᵏ a)
+*ᵏ-sum-tab-distribʳ {0} a f = *ᵏ-zeroˡ a
+*ᵏ-sum-tab-distribʳ {suc n} a f =
+  begin
+    sum-tab f *ᵏ a
+  ≈⟨ *ᵏ-+ᵏ-distribʳ a (f Fin.zero) (sum-tab (λ k -> f (Fin.suc k))) ⟩
+     (f Fin.zero *ᵏ a) +ᵏ (sum-tab (λ k -> f (Fin.suc k)) *ᵏ a)
+  ≈⟨ +ᵏ-cong ≈ᵏ-refl  (*ᵏ-sum-tab-distribʳ a (λ k -> f (Fin.suc k))) ⟩
+     sum-tab (λ k -> f k *ᵏ a)
+  ∎
+  where open import Relation.Binary.EqReasoning (Field.setoid K)
+
+sum-assoc : ∀ {n} (f g : Fin n -> K')
+          -> (sum-tab f +ᵏ sum-tab g) ≈ᵏ sum-tab (λ k -> f k +ᵏ g k)
+sum-assoc {0} f g = +ᵏ-identityˡ 0ᵏ
+sum-assoc {suc n} f g =
+  begin
+    sum-tab f +ᵏ sum-tab g
+  ≡⟨⟩
+    (f Fin.zero +ᵏ sum-tab {n} (λ k -> f (Fin.suc k))) +ᵏ (g Fin.zero +ᵏ sum-tab {n} (λ k -> g (Fin.suc k)))
+  ≈⟨ +ᵏ-assoc (f Fin.zero) (sum-tab {n} (λ k -> f (Fin.suc k))) (g Fin.zero +ᵏ sum-tab {n} (λ k -> g (Fin.suc k))) ⟩
+     f Fin.zero +ᵏ (sum-tab (λ k → f (Fin.suc k)) +ᵏ (g Fin.zero +ᵏ sum-tab (λ k → g (Fin.suc k))))
+  ≈⟨ +ᵏ-cong ≈ᵏ-refl (+ᵏ-comm (sum-tab (λ k -> f (Fin.suc k))) ((g Fin.zero +ᵏ sum-tab (λ k → g (Fin.suc k))))) ⟩
+     f Fin.zero +ᵏ ((g Fin.zero +ᵏ sum-tab (λ k → g (Fin.suc k))) +ᵏ sum-tab (λ k → f (Fin.suc k)))
+  ≈⟨ +ᵏ-cong ≈ᵏ-refl (+ᵏ-assoc (g Fin.zero) (sum-tab (λ k -> g (Fin.suc k))) (sum-tab (λ k -> f (Fin.suc k)))) ⟩
+     f Fin.zero +ᵏ (g Fin.zero +ᵏ (sum-tab (λ k → g (Fin.suc k)) +ᵏ sum-tab (λ k → f (Fin.suc k))))
+  ≈⟨ ≈ᵏ-sym (+ᵏ-assoc (f Fin.zero) (g Fin.zero) (sum-tab (λ k → g (Fin.suc k)) +ᵏ sum-tab (λ k → f (Fin.suc k)))) ⟩
+     (f Fin.zero +ᵏ g Fin.zero) +ᵏ (sum-tab (λ k → g (Fin.suc k)) +ᵏ sum-tab (λ k → f (Fin.suc k)))
+  ≈⟨ +ᵏ-cong ≈ᵏ-refl (+ᵏ-comm (sum-tab λ k -> g (Fin.suc k)) (sum-tab λ k -> f (Fin.suc k))) ⟩
+     (f Fin.zero +ᵏ g Fin.zero) +ᵏ (sum-tab (λ k → f (Fin.suc k)) +ᵏ sum-tab (λ k → g (Fin.suc k)))
+  ≈⟨ +ᵏ-cong ≈ᵏ-refl (sum-assoc {n} (λ k -> f (Fin.suc k)) (λ k -> g (Fin.suc k))) ⟩
+     sum-tab (λ k -> f k +ᵏ g k)
+  ∎
+  where open import Relation.Binary.EqReasoning (Field.setoid K)
+
+sum-tab-0ᵏ : ∀ {n} -> sum-tab {n} (λ k -> 0ᵏ) ≈ᵏ 0ᵏ
+sum-tab-0ᵏ {0} = ≈ᵏ-refl
+sum-tab-0ᵏ {suc n} = ≈ᵏ-trans (+ᵏ-identityˡ (sum-tab {n} λ k -> 0ᵏ)) (sum-tab-0ᵏ {n})
+
+sum-tab-swap : ∀ {n p} (f : Fin n -> Fin p -> K') (g : Fin n -> K')
+             -> sum-tab (λ k′ -> sum-tab λ k -> f k k′ *ᵏ g k)
+             ≈ᵏ sum-tab (λ k -> sum-tab λ k′ -> f k k′ *ᵏ g k)
+sum-tab-swap {n} {0} f g = ≈ᵏ-sym (sum-tab-0ᵏ {n})
+sum-tab-swap {n} {suc p} f g =
+  begin
+    sum-tab (λ k′ -> sum-tab λ k -> f k k′ *ᵏ g k)
+  ≡⟨⟩
+    (sum-tab λ k -> f k Fin.zero *ᵏ g k) +ᵏ (sum-tab λ k′ -> sum-tab λ k -> f k (Fin.suc k′) *ᵏ g k)
+  ≈⟨ +ᵏ-cong ≈ᵏ-refl (sum-tab-swap {n} {p} (λ k k′ -> f k (Fin.suc k′)) g) ⟩
+     sum-tab (λ k → f k Fin.zero *ᵏ g k) +ᵏ sum-tab (λ k → sum-tab (λ k′ → f k (Fin.suc k′) *ᵏ g k))
+  ≈⟨ +ᵏ-cong ≈ᵏ-refl (sum-tab-cong λ k -> ≈ᵏ-sym (*ᵏ-sum-tab-distribʳ {p} (g k) λ k′ -> f k (Fin.suc k′))) ⟩
+     sum-tab (λ k → f k Fin.zero *ᵏ g k) +ᵏ sum-tab (λ k → sum-tab (λ k′ → f k (Fin.suc k′)) *ᵏ g k)
+  ≈⟨ sum-assoc (λ k -> f k Fin.zero *ᵏ g k) (λ k -> sum-tab (λ k′ -> f k (Fin.suc k′)) *ᵏ g k) ⟩
+     sum-tab (λ k -> (f k Fin.zero *ᵏ g k) +ᵏ (sum-tab (λ k′ -> f k (Fin.suc k′)) *ᵏ g k))
+  ≈⟨ sum-tab-cong (λ k -> ≈ᵏ-sym (*ᵏ-+ᵏ-distribʳ (g k) (f k Fin.zero) (sum-tab λ k′ -> f k (Fin.suc k′)))) ⟩
+     sum-tab (λ k -> sum-tab (λ k′ -> f k k′) *ᵏ g k)
+  ≈⟨ sum-tab-cong (λ k -> *ᵏ-sum-tab-distribʳ {suc p} (g k) (λ k′ -> f k k′)) ⟩
+     sum-tab (λ k -> sum-tab λ k′ -> f k k′ *ᵏ g k)
+  ∎
+  where open import Relation.Binary.EqReasoning (Field.setoid K)
 
 module _ {n} where
   open import Algebra.Structures (_≈_ {n})
