@@ -9,6 +9,7 @@ module Algebra.Linear.Construct.Vector
 open import Level using (_⊔_)
 open import Data.Product using (_×_; _,_)
 open import Data.Vec public hiding (sum)
+import Data.Vec.Properties as VP
 import Data.Vec.Relation.Binary.Pointwise.Inductive as PW
 open import Data.Nat hiding (_⊔_) renaming (_+_ to _+ℕ_)
 open import Data.Fin using (Fin)
@@ -16,7 +17,6 @@ open import Data.Fin using (Fin)
 open import Relation.Binary
 open import Algebra.Linear.Core
 open import Algebra.FunctionProperties
-
 
 open import Relation.Binary.PropositionalEquality as P
   using (_≡_; subst; subst-subst-sym)
@@ -26,6 +26,7 @@ open import Relation.Binary.PropositionalEquality as P
   ; trans to ≡-trans
   )
 
+open import Algebra.Structures.Field.Utils K
 import Algebra.Linear.Structures.VectorSpace as VS
 
 open VS.VectorSpaceField K
@@ -323,12 +324,15 @@ sum-cong : ∀ {n} {u v : V n} -> u ≈ v -> sum u ≈ᵏ sum v
 sum-cong {0} PW.[] = ≈ᵏ-refl
 sum-cong {suc n} (r PW.∷ rs) = +ᵏ-cong r (sum-cong {n} rs)
 
-tab-cong-≈ : ∀ {n} {f g : Fin n -> K'} -> (∀ i -> f i ≈ᵏ g i) -> tabulate f ≈ tabulate g
-tab-cong-≈ {0} r = PW.[]
-tab-cong-≈ {suc n} r = r Fin.zero PW.∷ tab-cong-≈ (λ i → r (Fin.suc i))
+tabulate-cong-≡ : ∀ {n} {f g : Fin n -> K'} -> (∀ i -> f i ≡ g i) -> tabulate f ≡ tabulate g
+tabulate-cong-≡ = VP.tabulate-cong
+
+tabulate-cong : ∀ {n} {f g : Fin n -> K'} -> (∀ i -> f i ≈ᵏ g i) -> tabulate f ≈ tabulate g
+tabulate-cong {0} r = PW.[]
+tabulate-cong {suc n} r = r Fin.zero PW.∷ tabulate-cong (λ i → r (Fin.suc i))
 
 sum-tab-cong : ∀ {n} {f g : Fin n -> K'} -> (∀ i -> f i ≈ᵏ g i) -> sum-tab f ≈ᵏ sum-tab g
-sum-tab-cong r = sum-cong (tab-cong-≈ r)
+sum-tab-cong r = sum-cong (tabulate-cong r)
 
 *ᵏ-sum-tab-distribʳ : ∀ {n} (a : K') (f : Fin n -> K')
                     → (sum-tab f *ᵏ a) ≈ᵏ sum-tab (λ k -> f k *ᵏ a)
@@ -389,6 +393,33 @@ sum-tab-swap {n} {suc p} f g =
      sum-tab (λ k -> sum-tab (λ k′ -> f k k′) *ᵏ g k)
   ≈⟨ sum-tab-cong (λ k -> *ᵏ-sum-tab-distribʳ {suc p} (g k) (λ k′ -> f k k′)) ⟩
      sum-tab (λ k -> sum-tab λ k′ -> f k k′ *ᵏ g k)
+  ∎
+  where open import Relation.Binary.EqReasoning (Field.setoid K)
+
+sum-tab-δ : ∀ {n} (f : Fin n -> K') (i : Fin n) -> sum-tab (λ k -> δ i k *ᵏ f k) ≈ᵏ f i
+sum-tab-δ {suc n} f i@Fin.zero =
+  begin
+    sum-tab (λ k -> δ i k *ᵏ f k)
+  ≡⟨⟩
+    (δ i i *ᵏ f i) +ᵏ sum-tab (λ k -> δ i (Fin.suc k) *ᵏ f (Fin.suc k))
+  ≈⟨ +ᵏ-cong (*ᵏ-identityˡ (f i))
+     (sum-tab-cong (λ k -> ≈ᵏ-trans (*ᵏ-cong (δ-cancelˡ {n} k) ≈ᵏ-refl) (*ᵏ-zeroˡ (f (Fin.suc k))))) ⟩
+    f i +ᵏ sum-tab {n} (λ k -> 0ᵏ)
+  ≈⟨ ≈ᵏ-trans (+ᵏ-cong ≈ᵏ-refl (sum-tab-0ᵏ {n})) (+ᵏ-identityʳ (f i)) ⟩
+    f i
+  ∎
+  where open import Relation.Binary.EqReasoning (Field.setoid K)
+sum-tab-δ {suc n} f (Fin.suc i) =
+  begin
+    sum-tab (λ k -> δ (Fin.suc i) k *ᵏ f k)
+  ≡⟨⟩
+    (δ (Fin.suc i) (Fin.zero {suc n}) *ᵏ f Fin.zero) +ᵏ sum-tab (λ k -> δ (Fin.suc i) (Fin.suc k) *ᵏ f (Fin.suc k))
+  ≈⟨ +ᵏ-cong (≈ᵏ-trans (*ᵏ-cong (δ-cancelʳ {p = suc n} (Fin.suc i)) ≈ᵏ-refl) (*ᵏ-zeroˡ (f Fin.zero))) ≈ᵏ-refl ⟩
+    0ᵏ +ᵏ sum-tab (λ k → δ (Fin.suc i) (Fin.suc k) *ᵏ f (Fin.suc k))
+  ≈⟨ +ᵏ-identityˡ (sum-tab λ k -> δ (Fin.suc i) (Fin.suc k) *ᵏ f (Fin.suc k)) ⟩
+    sum-tab (λ k → δ (Fin.suc i) (Fin.suc k) *ᵏ f (Fin.suc k))
+  ≈⟨ sum-tab-δ (λ k -> f (Fin.suc k)) i ⟩
+    f (Fin.suc i)
   ∎
   where open import Relation.Binary.EqReasoning (Field.setoid K)
 

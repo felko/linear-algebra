@@ -19,6 +19,8 @@ open import Algebra.Linear.Core
 
 import Data.Vec.Properties as VP
 
+open import Algebra.Structures.Field.Utils K
+
 import Algebra.Linear.Construct.Vector K as V
 open V
   using (Vec; zipWith; replicate)
@@ -162,17 +164,11 @@ lookup∘tabulate {suc n} f i j =
   where open import Relation.Binary.PropositionalEquality as Eq
         open Eq.≡-Reasoning
 
-tabulate-cong : ∀ {n p} {f g : Fin n -> Fin p -> K'} -> (∀ i j -> f i j ≡ g i j) -> tabulate f ≡ tabulate g
-tabulate-cong {f = f} {g = g} r =
-  begin
-    tabulate f
-  ≡⟨⟩
-    V.tabulate (λ i -> V.tabulate λ j -> f i j)
-  ≡⟨ VP.tabulate-cong (λ i → VP.tabulate-cong (λ j → r i j)) ⟩
-    tabulate g
-  ∎
-  where open import Relation.Binary.PropositionalEquality as Eq
-        open Eq.≡-Reasoning
+tabulate-cong-≡ : ∀ {n p} {f g : Fin n -> Fin p -> K'} -> (∀ i j -> f i j ≡ g i j) -> tabulate f ≡ tabulate g
+tabulate-cong-≡ {f = f} {g = g} r = VP.tabulate-cong (λ i → VP.tabulate-cong (λ j → r i j))
+
+tabulate-cong : ∀ {n p} {f g : Fin n -> Fin p -> K'} -> (∀ i j -> f i j ≈ᵏ g i j) -> tabulate f ≈ tabulate g
+tabulate-cong {f = f} {g = g} r = PW.tabulate⁺ (λ i → V.tabulate-cong (λ j → r i j))
 
 transpose : ∀ {n p} -> M n p -> M p n
 transpose A = tabulate λ i j -> A ⟪ j , i ⟫
@@ -186,7 +182,7 @@ transpose-involutive A =
     ((A ᵀ)ᵀ)
   ≡⟨⟩
     (tabulate λ i j -> (tabulate λ i′ j′ -> A ⟪ j′ , i′ ⟫) ⟪ j , i ⟫)
-  ≡⟨ tabulate-cong (λ i j → lookup∘tabulate (λ i′ j′ -> A ⟪ j′ , i′ ⟫) j i) ⟩
+  ≡⟨ tabulate-cong-≡ (λ i j → lookup∘tabulate (λ i′ j′ -> A ⟪ j′ , i′ ⟫) j i) ⟩
     (tabulate λ i j -> A ⟪ i , j ⟫)
   ≡⟨ tabulate∘lookup A ⟩
     A
@@ -334,6 +330,9 @@ concat-∙ {suc n} {p} c (u V.∷ us) =
   ∎
   where open import Relation.Binary.EqReasoning (V.setoid (p +ℕ n *ℕ p))
 
+I : ∀ {n p} -> M n p
+I = tabulate δ
+
 _*_ : ∀ {n p q} -> M n p -> M p q -> M n q
 A * B = tabulate λ i j -> V.sum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ (B ⟪ k , j ⟫)
 
@@ -375,6 +374,39 @@ A * B = tabulate λ i j -> V.sum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ (B ⟪ k , j
     V.sum-tab (λ k -> (A ⟪ i , k ⟫) *ᵏ ((B * C) ⟪ k , j ⟫))
   ∎
   where open import Relation.Binary.EqReasoning (Field.setoid K)
+
+*-identityˡ : ∀ {n p} (A : M n p) -> I * A ≈ A
+*-identityˡ {n} {p} A =
+  begin
+    I * A
+  ≡⟨⟩
+    tabulate (λ i j -> V.sum-tab λ k -> (I ⟪ i , k ⟫) *ᵏ (A ⟪ k , j ⟫))
+  ≈⟨ tabulate-cong (λ i j -> V.sum-tab-cong {n} λ k -> *ᵏ-cong (≈ᵏ-reflexive (lookup∘tabulate δ i k)) ≈ᵏ-refl) ⟩
+    tabulate (λ i j -> V.sum-tab λ k -> δ i k *ᵏ (A ⟪ k , j ⟫))
+  ≈⟨ tabulate-cong (λ i j -> V.sum-tab-δ (λ k -> A ⟪ k , j ⟫) i) ⟩
+    tabulate (λ i j -> A ⟪ i , j ⟫)
+  ≡⟨ tabulate∘lookup A ⟩
+    A
+  ∎
+  where open import Relation.Binary.EqReasoning (setoid {n} {p})
+
+*-identityʳ : ∀ {n p} (A : M n p) -> A * I ≈ A
+*-identityʳ {n} {p} A =
+  begin
+    A * I
+  ≡⟨⟩
+    tabulate (λ i j -> V.sum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ (I ⟪ k , j ⟫))
+  ≈⟨ tabulate-cong (λ i j -> V.sum-tab-cong {p} λ k -> *ᵏ-cong ≈ᵏ-refl (≈ᵏ-reflexive (lookup∘tabulate δ k j))) ⟩
+    tabulate (λ i j -> V.sum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ δ k j)
+  ≈⟨ tabulate-cong (λ i j -> V.sum-tab-cong {p} λ k -> *ᵏ-cong ≈ᵏ-refl (δ-comm k j)) ⟩
+    tabulate (λ i j -> V.sum-tab λ k -> (A ⟪ i , k ⟫) *ᵏ δ j k)
+  ≈⟨ tabulate-cong (λ i j -> ≈ᵏ-trans (V.sum-tab-cong {p} (λ k -> *ᵏ-comm ((A ⟪ i , k ⟫)) (δ j k)))
+                                      (V.sum-tab-δ (λ k -> A ⟪ i , k ⟫) j)) ⟩
+    tabulate (λ i j -> A ⟪ i , j ⟫)
+  ≡⟨ tabulate∘lookup A ⟩
+    A
+  ∎
+  where open import Relation.Binary.EqReasoning (setoid {n} {p})
 
 module _ {n p} where
   open IsEquivalence (≈-isEquiv {n} {p}) public

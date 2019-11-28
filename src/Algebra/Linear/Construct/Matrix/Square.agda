@@ -23,9 +23,6 @@ private
   K' : Set k
   K' = F.Carrier
 
-I : ∀ {n} -> M n
-I = tabulate δ
-
 UpperTriangular : ℕ -> Set (k ⊔ ℓ)
 UpperTriangular n = ∃ λ (A : M n) -> ∀ {i j} -> j ≤ i -> (A ⟪ i , j ⟫) F.≈ F.0#
 
